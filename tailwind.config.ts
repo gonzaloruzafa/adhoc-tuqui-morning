@@ -16,7 +16,6 @@ const config: Config = {
                     mustard: '#FEA912',
                     white: '#FFFFFF',
                 },
-                border: "hsl(214.3 31.8% 91.4%)",
             },
             fontFamily: {
                 sans: ['var(--font-apercu)', 'system-ui', 'sans-serif'],

@@ -1,9 +1,6 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import localFont from 'next/font/local'
 import './globals.css'
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 const newKansas = localFont({
   src: [
@@ -47,7 +44,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${inter.variable} ${newKansas.variable} ${apercu.variable} font-sans antialiased bg-gray-50 text-gray-900`}>
+      <body className={`${newKansas.variable} ${apercu.variable} font-sans antialiased bg-white text-gray-900`}>
         {children}
       </body>
     </html>

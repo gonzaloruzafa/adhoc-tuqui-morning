@@ -115,6 +115,30 @@ export function ConfigForm({ initialData }: ConfigFormProps) {
                     <div className="absolute inset-0 bg-gradient-to-r from-adhoc-violet/0 via-white/20 to-adhoc-violet/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                 </button>
             </div>
+
+            {/* Force Send Button */}
+            <div className="pt-2 border-t border-gray-100 mt-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">Zona de Pruebas</h3>
+                <button
+                    type="button"
+                    onClick={async () => {
+                        toast.promise(
+                            fetch('/api/internal/trigger-pipeline', { method: 'POST' }).then(async r => {
+                                if (!r.ok) throw new Error("Error");
+                                return r.json();
+                            }),
+                            {
+                                loading: 'Iniciando briefing...',
+                                success: 'Briefing iniciado! Te llegará por WhatsApp en breve.',
+                                error: 'Error al iniciar briefing'
+                            }
+                        );
+                    }}
+                    className="w-full rounded-xl bg-white border-2 border-dashed border-gray-300 px-4 py-3 text-sm font-medium text-gray-600 hover:border-adhoc-violet hover:text-adhoc-violet transition-colors focus:outline-none focus:ring-4 focus:ring-adhoc-violet/10"
+                >
+                    Forzar Envío Ahora
+                </button>
+            </div>
         </form>
     );
 }

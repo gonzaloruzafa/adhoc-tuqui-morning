@@ -1,5 +1,5 @@
-import { EmailSummary } from "./google/gmail";
-import { CalendarEvent } from "./google/calendar";
+import { EmailSummary } from "../google/gmail";
+import { CalendarEvent } from "../google/calendar";
 
 // ===========================================
 // EMAIL HEURISTICS

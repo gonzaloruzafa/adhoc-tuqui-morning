@@ -1,34 +1,10 @@
-import NextAuth, { NextAuthConfig } from "next-auth"
-import Google from "next-auth/providers/google"
+import NextAuth from "next-auth"
+import { authConfig } from "./auth.config"
 
-export const authConfig = {
-    // Secret for signing the session
-    secret: process.env.AUTH_SECRET,
-    providers: [
-        Google({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            authorization: {
-                params: {
-                    scope: [
-                        "openid",
-                        "email",
-                        "profile",
-                        "https://www.googleapis.com/auth/gmail.readonly",
-                        "https://www.googleapis.com/auth/calendar.readonly",
-                    ].join(" "),
-                    access_type: "offline",
-                    prompt: "consent",
-                },
-            },
-        }),
-    ],
-    pages: {
-        signIn: "/login", // Custom login page
-        error: "/login",
-    },
-    debug: process.env.NODE_ENV === 'development',
+export const { handlers, auth, signIn, signOut } = NextAuth({
+    ...authConfig,
     callbacks: {
+        ...authConfig.callbacks,
         async signIn({ user, account, profile }) {
             if (account && account.provider === 'google') {
                 try {
@@ -66,30 +42,9 @@ export const authConfig = {
                     }
                 } catch (e) {
                     console.error("SignIn callback error:", e)
-                    return false // Deny sign in on critical error? Maybe just log.
+                    return false
                 }
             }
-            return true
-        },
-        authorized({ auth, request: { nextUrl } }) {
-            const isLoggedIn = !!auth?.user
-            const isOnLogin = nextUrl.pathname === "/login"
-
-            // Allow public assets and api
-            if (nextUrl.pathname.startsWith("/api/auth")) return true
-            if (nextUrl.pathname.startsWith("/_next")) return true
-            if (nextUrl.pathname.startsWith("/public")) return true
-
-            // Redirect to login if not logged in
-            if (!isLoggedIn && !isOnLogin) {
-                return false; // Redirect to login
-            }
-
-            // Redirect to home if logged in and on login page
-            if (isLoggedIn && isOnLogin) {
-                return Response.redirect(new URL("/", nextUrl))
-            }
-
             return true
         },
         async jwt({ token, account }) {
@@ -104,6 +59,4 @@ export const authConfig = {
             return session
         },
     },
-} satisfies NextAuthConfig
-
-export const { handlers, auth, signIn, signOut } = NextAuth(authConfig)
+})

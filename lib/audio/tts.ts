@@ -16,7 +16,7 @@ export async function generateAudio(text: string, userId: string) {
     // 1. Synthesize Speech using Gemini TTS (Special Restricted API)
     // This doesn't need Service Account credentials, only the GEMINI_API_KEY
     const prompt = VOICE_DIRECTION + text;
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
     const ttsResponse = await fetch(apiUrl, {
         method: 'POST',

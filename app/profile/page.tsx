@@ -21,13 +21,20 @@ export default async function ProfilePage() {
         .eq("email", session.user.email)
         .single();
 
+    const isAnalyzing = user?.profile_analysis_status === 'analyzing';
+
+    const formatVal = (val: any, fallback: string) => {
+        if (!val || val === 'null') return fallback;
+        return val;
+    };
+
     if (!profile) {
         return (
             <div className="max-w-4xl mx-auto px-6 py-12">
                 <div className="bg-white rounded-3xl p-12 text-center shadow-sm border border-gray-100">
                     <h1 className="text-3xl font-bold text-gray-900 mb-4 font-kansas">Tu Perfil Inteligente</h1>
                     <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                        {user?.profile_analysis_status === 'analyzing'
+                        {isAnalyzing
                             ? "Tuqui está analizando tu historial para conocerte mejor. Esto puede tardar un minuto..."
                             : "Todavía no terminamos de analizar tu perfil. Logueate de nuevo o esperá un momento."}
                     </p>
@@ -35,8 +42,8 @@ export default async function ProfilePage() {
                         <Link href="/" className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-200">
                             Volver al Inicio
                         </Link>
-                        {user?.profile_analysis_status !== 'analyzing' && (
-                            <ProfileEditor initialBio={null} />
+                        {!isAnalyzing && (
+                            <ProfileEditor initialBio={null} profileStatus={user?.profile_analysis_status} />
                         )}
                     </div>
                 </div>
@@ -61,7 +68,7 @@ export default async function ProfilePage() {
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                 {/* Editable Bio & Recalculate */}
                 <div className="lg:col-span-2">
-                    <ProfileEditor initialBio={profile.persona_description} />
+                    <ProfileEditor initialBio={profile.persona_description} profileStatus={user?.profile_analysis_status} />
                 </div>
 
                 {/* Identity Sidebar */}
@@ -77,23 +84,23 @@ export default async function ProfilePage() {
                             <div>
                                 <dt className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Rol & Seniority</dt>
                                 <dd className="text-lg font-bold text-gray-900 tracking-tight">
-                                    {profile.inferred_role || "Sin detectar"}
+                                    {formatVal(profile.inferred_role, "Sin detectar")}
                                     <span className="text-gray-300 mx-1">/</span>
-                                    <span className="text-gray-500 font-medium">{profile.inferred_seniority || "Pendiente"}</span>
+                                    <span className="text-gray-500 font-medium">{formatVal(profile.inferred_seniority, "Pendiente")}</span>
                                 </dd>
                             </div>
                             <div>
                                 <dt className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Empresa / Industria</dt>
                                 <dd className="text-lg font-bold text-gray-900 tracking-tight">
-                                    {profile.inferred_company || "No identificada"}
+                                    {formatVal(profile.inferred_company, "No identificada")}
                                     <br />
-                                    <span className="text-sm text-gray-400 font-medium">{profile.inferred_industry || "Industria pendiente"}</span>
+                                    <span className="text-sm text-gray-400 font-medium">{formatVal(profile.inferred_industry, "Industria pendiente")}</span>
                                 </dd>
                             </div>
                             <div>
                                 <dt className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Foco Semanal</dt>
                                 <dd className="text-md font-bold text-indigo-600 leading-tight">
-                                    {profile.current_focus ? `"${profile.current_focus}"` : "Aún analizando foco..."}
+                                    {profile.current_focus && profile.current_focus !== 'null' ? `"${profile.current_focus}"` : "Aún analizando foco..."}
                                 </dd>
                             </div>
                         </dl>

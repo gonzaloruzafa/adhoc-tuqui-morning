@@ -6,13 +6,14 @@ import { useRouter } from "next/navigation";
 
 interface ProfileEditorProps {
     initialBio: string | null;
+    profileStatus?: string;
 }
 
-export function ProfileEditor({ initialBio }: ProfileEditorProps) {
+export function ProfileEditor({ initialBio, profileStatus }: ProfileEditorProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [bio, setBio] = useState(initialBio || "");
     const [isSaving, setIsSaving] = useState(false);
-    const [isRecalculating, setIsRecalculating] = useState(false);
+    const [isRecalculating, setIsRecalculating] = useState(profileStatus === 'analyzing');
     const router = useRouter();
 
     const handleSave = async () => {

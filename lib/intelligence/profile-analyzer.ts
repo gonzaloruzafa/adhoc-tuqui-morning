@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { EmailSummary } from "@/lib/google/gmail";
 import { getClient } from "@/lib/supabase/client";
+import { revalidatePath } from "next/cache";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -53,7 +54,10 @@ export function generateProfileAnalysisPrompt(
 
     return `
 Analizá los emails de ${userName} para crear su perfil profesional.
-IMPORTANTE: Solo inferí de la EVIDENCIA. No inventes datos.
+REGLAS CRÍTICAS:
+1. Basate SOLO en la evidencia de los emails provistos.
+2. Si no encontrás evidencia para un campo, usá el valor null (tipo null de JSON), NUNCA la palabra "null" como texto.
+3. El seniority debe ser obligatoriamente uno de estos: "executive", "manager", "individual_contributor" o null.
 
 CONTACTOS MÁS FRECUENTES:
 ${topSenders}
@@ -61,16 +65,16 @@ ${topSenders}
 EMAILS RECIENTES (últimos ${emails.length}):
 ${emailsSummary}
 
-Respondé SOLO con JSON válido (sin markdown, sin explicaciones):
+Respondé SOLO con JSON válido (sin markdown, sin explicaciones, sin bloques de código):
 
 {
-  "inferred_role": "rol más probable basado en evidencia (CEO, Founder, Manager, Developer, etc.) o null si no hay evidencia",
-  "inferred_company": "empresa/organización donde trabaja o null",
-  "inferred_industry": "industria principal (Software, E-commerce, Fintech, etc.) o null",
+  "inferred_role": "CEO, Founder, Product Manager, etc. (o null)",
+  "inferred_company": "Nombre de la empresa (o null)",
+  "inferred_industry": "Industria (o null)",
   "inferred_seniority": "executive" | "manager" | "individual_contributor" | null,
   "inferred_tone": "formal" | "casual" | "mixed",
-  "recurring_topics": ["máximo 5 temas que aparecen frecuentemente en los asuntos"],
-  "current_focus": "en qué parece estar enfocado esta semana (1 frase corta) o null",
+  "recurring_topics": ["máximo 5 temas principales"],
+  "current_focus": "foco actual en 1 frase (o null)",
   "stress_level": "low" | "medium" | "high",
   "vip_contacts": [
     {
@@ -80,9 +84,9 @@ Respondé SOLO con JSON válido (sin markdown, sin explicaciones):
       "frequency": número_de_emails
     }
   ],
-  "vip_domains": ["dominios importantes como empresa.com, cliente.com (ej: adhoc.com.ar)"],
-  "personality_hints": "cómo prefiere comunicarse esta persona (1 frase)",
-  "preferred_greeting": "nombre corto o apodo inferido del tono de los emails",
+  "vip_domains": ["ej. adhoc.com.ar"],
+  "personality_hints": "estilo de comunicación (1 frase)",
+  "preferred_greeting": "apodo o nombre corto que prefiere",
   "persona_description": "una breve bio de 2-3 frases resumiendo quién es esta persona profesionalmente y su rol actual"
 }
 `;
@@ -115,6 +119,7 @@ export async function analyzeUserProfile(
 }
 
 export async function runProfileAnalysis(userEmail: string): Promise<void> {
+    console.log(`[ProfileAnalyzer] Starting analysis for ${userEmail}`);
     const db = getClient();
     await db.from("tuqui_morning_users").update({ profile_analysis_status: "analyzing" }).eq("email", userEmail);
 
@@ -124,14 +129,21 @@ export async function runProfileAnalysis(userEmail: string): Promise<void> {
         const accessToken = await getValidAccessToken(userEmail);
 
         const { fetchRecentEmails } = await import("@/lib/google/gmail");
+        console.log(`[ProfileAnalyzer] Fetching emails...`);
         const emails = await fetchRecentEmails(accessToken, {
-            maxResults: 500, // Increase to 500 for better depth
-            q: "" // No filters, just last 500 emails
+            maxResults: 150, // Reduced from 500 for serverless reliability
+            q: "" // Use the fix in gmail.ts to get all mail
         });
 
-        if (emails.length < 5) throw new Error("Not enough emails for analysis");
+        console.log(`[ProfileAnalyzer] Found ${emails.length} emails. Analyzing...`);
+        if (emails.length < 5) {
+            console.warn(`[ProfileAnalyzer] Not enough emails (${emails.length})`);
+            throw new Error("Not enough emails for analysis");
+        }
 
         const profile = await analyzeUserProfile(emails, user?.name || "Usuario");
+        console.log(`[ProfileAnalyzer] Analysis complete. Saving...`);
+
         await db.from("tuqui_morning_user_profiles").upsert({
             user_email: userEmail,
             ...profile,
@@ -145,9 +157,14 @@ export async function runProfileAnalysis(userEmail: string): Promise<void> {
             onboarding_completed: true
         }).eq("email", userEmail);
 
+        console.log(`[ProfileAnalyzer] Done. Revalidating paths.`);
+        revalidatePath("/profile");
+        revalidatePath("/");
+
     } catch (error) {
-        console.error("Profile analysis failed:", error);
+        console.error("[ProfileAnalyzer] Profile analysis failed:", error);
         await db.from("tuqui_morning_users").update({ profile_analysis_status: "failed" }).eq("email", userEmail);
+        revalidatePath("/profile");
         throw error;
     }
 }

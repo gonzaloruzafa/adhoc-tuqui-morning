@@ -27,7 +27,7 @@ export async function fetchRecentEmails(
     );
 
     try {
-        const query = q || `in:inbox after:${afterTimestamp}`;
+        const query = q !== undefined ? q : `in:inbox after:${afterTimestamp}`;
         const response = await gmail.users.messages.list({
             userId: "me",
             maxResults,

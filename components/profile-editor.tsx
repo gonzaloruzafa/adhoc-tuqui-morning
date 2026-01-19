@@ -16,11 +16,16 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail }: ProfileE
     const [isSaving, setIsSaving] = useState(false);
     const [isRecalculating, setIsRecalculating] = useState(profileStatus === 'analyzing');
     const [progress, setProgress] = useState({ count: 0, total: 0 });
+    const [lastProgressAt, setLastProgressAt] = useState(Date.now());
+    const [isStuck, setIsStuck] = useState(false);
     const router = useRouter();
 
     // Polling for progress when recalculating
     useEffect(() => {
-        if (!isRecalculating) return;
+        if (!isRecalculating) {
+            setIsStuck(false);
+            return;
+        }
 
         const interval = setInterval(async () => {
             try {
@@ -28,6 +33,10 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail }: ProfileE
                 const data = await res.json();
 
                 if (data.count && data.total) {
+                    if (data.count > progress.count) {
+                        setLastProgressAt(Date.now());
+                        setIsStuck(false);
+                    }
                     setProgress({ count: data.count, total: data.total });
                 }
 
@@ -35,13 +44,18 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail }: ProfileE
                     setIsRecalculating(false);
                     router.refresh();
                 }
+
+                // If stuck for more than 45 seconds without progress change
+                if (Date.now() - lastProgressAt > 45000) {
+                    setIsStuck(true);
+                }
             } catch (e) {
                 console.error("Progress check failed", e);
             }
         }, 3000);
 
         return () => clearInterval(interval);
-    }, [isRecalculating, userEmail, router]);
+    }, [isRecalculating, userEmail, router, progress.count, lastProgressAt]);
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -59,14 +73,15 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail }: ProfileE
 
     const handleRecalculate = async () => {
         setIsRecalculating(true);
+        setIsStuck(false);
+        setLastProgressAt(Date.now());
         try {
             const result = await retriggerProfileAnalysis();
-            alert(result.message);
+            // alert(result.message);
             router.refresh();
         } catch (error) {
             console.error(error);
             alert("Error al iniciar el recalculado");
-        } finally {
             setIsRecalculating(false);
         }
     };
@@ -79,7 +94,7 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail }: ProfileE
                     {!isEditing ? (
                         <button
                             onClick={() => setIsEditing(true)}
-                            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 uppercase tracking-widest"
+                            className="text-xs font-bold text-adhoc-violet hover:text-adhoc-violet/80 uppercase tracking-widest"
                         >
                             Editar
                         </button>
@@ -94,7 +109,7 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail }: ProfileE
                             <button
                                 onClick={handleSave}
                                 disabled={isSaving}
-                                className="text-xs font-bold text-indigo-600 hover:text-indigo-700 uppercase tracking-widest disabled:opacity-50"
+                                className="text-xs font-bold text-adhoc-violet hover:text-adhoc-violet/80 uppercase tracking-widest disabled:opacity-50"
                             >
                                 {isSaving ? "Guardando..." : "Guardar"}
                             </button>
@@ -112,7 +127,7 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail }: ProfileE
                     <textarea
                         value={bio}
                         onChange={(e) => setBio(e.target.value)}
-                        className="w-full p-5 rounded-2xl bg-white border-2 border-indigo-100 focus:border-indigo-500 focus:outline-none text-sm text-gray-700 leading-relaxed min-h-[150px] transition-all"
+                        className="w-full p-5 rounded-2xl bg-white border-2 border-adhoc-violet/20 focus:border-adhoc-violet focus:outline-none text-sm text-gray-700 leading-relaxed min-h-[150px] transition-all"
                         placeholder="Describite brevemente..."
                     />
                 )}
@@ -121,32 +136,37 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail }: ProfileE
             <div className="flex flex-col items-center gap-4">
                 <button
                     onClick={handleRecalculate}
-                    disabled={isRecalculating}
-                    className="group relative flex items-center gap-2 bg-indigo-50 text-indigo-700 px-6 py-3 rounded-2xl font-bold hover:bg-indigo-100 transition-all active:scale-95 disabled:opacity-50"
+                    disabled={isRecalculating && !isStuck}
+                    className="group relative flex items-center gap-2 bg-adhoc-violet/10 text-adhoc-violet px-6 py-3 rounded-2xl font-bold hover:bg-adhoc-violet/20 transition-all active:scale-95 disabled:opacity-50"
                 >
-                    <svg className={`w-4 h-4 ${isRecalculating ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className={`w-4 h-4 ${isRecalculating && !isStuck ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    {isRecalculating ? "Analizando emails..." : "Recalcular con Inteligencia"}
+                    {isStuck ? "Reiniciar (Parece trabado)" : isRecalculating ? "Analizando emails..." : "Recalcular con Inteligencia"}
                 </button>
 
                 {isRecalculating && progress.total > 0 && (
                     <div className="w-full max-w-xs space-y-2">
-                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-indigo-500">
+                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-adhoc-violet/60">
                             <span>Progreso</span>
                             <span>{progress.count} / {progress.total}</span>
                         </div>
-                        <div className="w-full bg-gray-100 rounded-full h-1.5">
+                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
                             <div
-                                className="bg-indigo-600 h-1.5 rounded-full transition-all duration-500"
-                                style={{ width: `${Math.round((progress.count / progress.total) * 100)}%` }}
+                                className="bg-adhoc-violet h-1.5 rounded-full transition-all duration-500"
+                                style={{ width: `${Math.round((progress.count / Math.max(1, progress.total)) * 100)}%` }}
                             ></div>
                         </div>
+                        {isStuck && (
+                            <p className="text-[9px] text-adhoc-coral font-bold text-center animate-pulse uppercase">
+                                El análisis parece estar demorando más de lo habitual...
+                            </p>
+                        )}
                     </div>
                 )}
             </div>
             <p className="text-[10px] text-gray-400 text-center font-medium max-w-xs mx-auto">
-                El recalculado analizará tus últimos 300 emails (incluyendo Gmail, Enviados y Archivados) para refinar tu perfil.
+                El recalculado analizará tus últimos 100 emails (incluyendo Gmail, Enviados y Archivados) para refinar tu perfil profesional.
             </p>
         </div>
     );

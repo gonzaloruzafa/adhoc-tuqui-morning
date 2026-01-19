@@ -39,7 +39,7 @@ export default async function ProfilePage() {
                             : "Todavía no terminamos de analizar tu perfil. Logueate de nuevo o esperá un momento."}
                     </p>
                     <div className="flex flex-col items-center gap-6">
-                        <Link href="/" className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-200">
+                        <Link href="/" className="bg-adhoc-violet text-white px-8 py-4 rounded-2xl font-bold hover:bg-adhoc-violet/90 transition-all shadow-lg hover:shadow-adhoc-violet/20">
                             Volver al Inicio
                         </Link>
                         {!isAnalyzing && (
@@ -56,7 +56,7 @@ export default async function ProfilePage() {
             <div className="flex items-center justify-between mb-10">
                 <div>
                     <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2 font-display">
-                        Tu Perfil <span className="text-indigo-600">Tuqui</span>
+                        Tu Perfil <span className="text-adhoc-violet">Tuqui</span>
                     </h1>
                     <p className="text-gray-500 font-medium">Lo que la IA dedujo de tu historial de emails.</p>
                 </div>
@@ -74,7 +74,7 @@ export default async function ProfilePage() {
                 {/* Identity Sidebar */}
                 <div className="space-y-6">
                     <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                        <h2 className="text-lg font-bold text-indigo-600 mb-6 flex items-center gap-2 tracking-tight font-display">
+                        <h2 className="text-lg font-bold text-adhoc-violet mb-6 flex items-center gap-2 tracking-tight font-display">
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
@@ -99,7 +99,7 @@ export default async function ProfilePage() {
                             </div>
                             <div>
                                 <dt className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Foco Semanal</dt>
-                                <dd className="text-md font-bold text-indigo-600 leading-tight">
+                                <dd className="text-md font-bold text-adhoc-violet leading-tight">
                                     {profile.current_focus && profile.current_focus !== 'null' ? `"${profile.current_focus}"` : "Aún analizando foco..."}
                                 </dd>
                             </div>
@@ -115,7 +115,7 @@ export default async function ProfilePage() {
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-sm text-gray-500 font-medium">Nivel de Estrés</span>
-                                <span className="text-sm font-black text-indigo-600 capitalize">{profile.stress_level}</span>
+                                <span className="text-sm font-black text-adhoc-violet capitalize">{profile.stress_level}</span>
                             </div>
                         </div>
                     </div>
@@ -123,7 +123,7 @@ export default async function ProfilePage() {
 
                 {/* VIP Contacts */}
                 <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                    <h2 className="text-lg font-bold text-orange-600 mb-6 flex items-center gap-2 tracking-tight">
+                    <h2 className="text-lg font-bold text-adhoc-coral mb-6 flex items-center gap-2 tracking-tight">
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
@@ -136,7 +136,7 @@ export default async function ProfilePage() {
                                     <p className="text-sm font-bold text-gray-900 tracking-tight">{contact.name}</p>
                                     <p className="text-[10px] text-gray-500 uppercase font-black">{contact.relationship}</p>
                                 </div>
-                                <span className="bg-orange-100 text-orange-600 text-[9px] px-2 py-1 rounded-lg font-black tracking-tighter">
+                                <span className="bg-adhoc-coral/10 text-adhoc-coral text-[9px] px-2 py-1 rounded-lg font-black tracking-tighter">
                                     {contact.frequency}
                                 </span>
                             </div>
@@ -146,7 +146,7 @@ export default async function ProfilePage() {
 
                 {/* Topics */}
                 <div className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                    <h2 className="text-lg font-bold text-indigo-600 mb-6 flex items-center gap-2 tracking-tight">
+                    <h2 className="text-lg font-bold text-adhoc-violet mb-6 flex items-center gap-2 tracking-tight">
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 11h.01M7 15h.01M13 7h.01M13 11h.01M13 15h.01M17 7h.01M17 11h.01M17 15h.01" />
                         </svg>
@@ -154,7 +154,7 @@ export default async function ProfilePage() {
                     </h2>
                     <div className="flex flex-wrap gap-2">
                         {profile.recurring_topics?.map((topic: string, idx: number) => (
-                            <span key={idx} className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-xl text-sm font-bold border border-indigo-100">
+                            <span key={idx} className="bg-adhoc-violet/10 text-adhoc-violet px-4 py-2 rounded-xl text-sm font-bold border border-adhoc-violet/20">
                                 {topic}
                             </span>
                         ))}

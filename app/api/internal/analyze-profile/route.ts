@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { auth } from "@/auth";
 import { runProfileAnalysis } from "@/lib/intelligence/profile-analyzer";
 
@@ -13,14 +13,20 @@ export async function POST(request: Request) {
     }
 
     try {
-        // Run analysis asynchronously
-        runProfileAnalysis(userEmail)
-            .then(() => console.log(`✅ Profile analysis completed for ${userEmail}`))
-            .catch(e => console.error(`❌ Profile analysis failed for ${userEmail}:`, e));
+        // Run analysis asynchronously using after() to ensure it survives the response delivery
+        after(async () => {
+            console.log(`🚀 Starting background profile analysis for ${userEmail}`);
+            try {
+                await runProfileAnalysis(userEmail);
+                console.log(`✅ Profile analysis completed for ${userEmail}`);
+            } catch (e) {
+                console.error(`❌ Profile analysis failed for ${userEmail}:`, e);
+            }
+        });
 
         return NextResponse.json({
             success: true,
-            message: "Profile analysis started"
+            message: "Profile analysis started in background"
         });
 
     } catch (error) {

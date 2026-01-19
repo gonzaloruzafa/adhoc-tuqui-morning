@@ -25,13 +25,18 @@ export function OnboardingWizard({
     const [time, setTime] = useState(initialTime);
     const [phone, setPhone] = useState(initialPhone);
     const [isSaving, setIsSaving] = useState(false);
+    const [isStuck, setIsStuck] = useState(false);
+    const [lastProgressAt, setLastProgressAt] = useState(Date.now());
     const router = useRouter();
 
     const [progress, setProgress] = useState({ count: 0, total: 0 });
 
     // Step 1: Polling for profile completion
     useEffect(() => {
-        if (step !== 1 || status === 'completed') return;
+        if (step !== 1 || status === 'completed') {
+            setIsStuck(false);
+            return;
+        }
 
         const interval = setInterval(async () => {
             try {
@@ -39,6 +44,10 @@ export function OnboardingWizard({
                 const data = await statusRes.json();
 
                 if (data.count && data.total) {
+                    if (data.count > progress.count) {
+                        setLastProgressAt(Date.now());
+                        setIsStuck(false);
+                    }
                     setProgress({ count: data.count, total: data.total });
                 }
 
@@ -46,13 +55,32 @@ export function OnboardingWizard({
                     setStatus('completed');
                     setStep(2);
                 }
+
+                // If stuck for more than 60 seconds (onboarding might take longer initially)
+                if (Date.now() - lastProgressAt > 60000) {
+                    setIsStuck(true);
+                }
             } catch (e) {
                 console.error("Status check failed", e);
             }
         }, 3000);
 
         return () => clearInterval(interval);
-    }, [step, status, userEmail]);
+    }, [step, status, userEmail, progress.count, lastProgressAt]);
+
+    const handleRestart = async () => {
+        setIsStuck(false);
+        setLastProgressAt(Date.now());
+        try {
+            await fetch('/api/internal/analyze-profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userEmail })
+            });
+        } catch (e) {
+            console.error("Failed to restart analysis", e);
+        }
+    };
 
     const handleStep2Submit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -85,7 +113,7 @@ export function OnboardingWizard({
                 {[1, 2, 3].map((s) => (
                     <div
                         key={s}
-                        className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-500 ${step >= s ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-110' : 'bg-white border-2 border-gray-100 text-gray-300'
+                        className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center font-bold font-display transition-all duration-500 ${step >= s ? 'bg-adhoc-violet text-white shadow-lg shadow-adhoc-violet/20 scale-110' : 'bg-white border-2 border-gray-100 text-gray-300'
                             }`}
                     >
                         {s}
@@ -97,8 +125,8 @@ export function OnboardingWizard({
             {step === 1 && (
                 <div className="text-center space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
                     <div className="relative w-24 h-24 mx-auto">
-                        <div className="absolute inset-0 rounded-full border-4 border-indigo-50 animate-ping"></div>
-                        <div className="relative w-full h-full rounded-full bg-white flex items-center justify-center shadow-xl border border-indigo-50">
+                        <div className="absolute inset-0 rounded-full border-4 border-adhoc-violet/10 animate-ping"></div>
+                        <div className="relative w-full h-full rounded-full bg-white flex items-center justify-center shadow-xl border border-adhoc-violet/10">
                             <span className="text-3xl animate-bounce">🧠</span>
                         </div>
                     </div>
@@ -108,24 +136,35 @@ export function OnboardingWizard({
                             Tuqui está analizando tus últimos emails para entender tu ritmo de trabajo, tus temas clave y quiénes son tus contactos VIP.
                         </p>
                     </div>
-                    <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100/50">
+                    <div className="bg-adhoc-violet/5 p-6 rounded-3xl border border-adhoc-violet/10">
                         {progress.total > 0 ? (
                             <div className="space-y-3">
-                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-indigo-700">
+                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-adhoc-violet">
                                     <span>Analizando historial</span>
                                     <span>{progress.count} / {progress.total}</span>
                                 </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                                     <div
-                                        className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
-                                        style={{ width: `${Math.round((progress.count / progress.total) * 100)}%` }}
+                                        className="bg-adhoc-violet h-2 rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.round((progress.count / Math.max(1, progress.total)) * 100)}%` }}
                                     ></div>
                                 </div>
+                                {isStuck && (
+                                    <div className="mt-4 space-y-2">
+                                        <p className="text-[10px] text-adhoc-coral font-bold animate-pulse uppercase">El análisis parece estar demorando más de lo normal...</p>
+                                        <button
+                                            onClick={handleRestart}
+                                            className="text-xs font-black text-adhoc-violet underline decoration-2 underline-offset-4"
+                                        >
+                                            REINTENTAR AHORA
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="flex items-center gap-4 text-left">
-                                <div className="w-1.5 h-12 bg-indigo-500 rounded-full animate-pulse"></div>
-                                <p className="text-sm font-bold text-indigo-700 leading-tight">
+                                <div className="w-1.5 h-12 bg-adhoc-violet rounded-full animate-pulse"></div>
+                                <p className="text-sm font-bold text-adhoc-violet leading-tight">
                                     "Esto nos permite armarte un briefing 100% a medida, descartando el spam y priorizando lo que importa."
                                 </p>
                             </div>
@@ -150,7 +189,7 @@ export function OnboardingWizard({
 
                     <form onSubmit={handleStep2Submit} className="space-y-6">
                         <div className="space-y-4">
-                            <div className="bg-white p-8 rounded-3xl border-2 border-indigo-50 shadow-sm focus-within:border-indigo-600 transition-colors">
+                            <div className="bg-white p-8 rounded-3xl border-2 border-gray-100 shadow-sm focus-within:border-adhoc-violet/50 transition-colors">
                                 <label className="block text-[10px] uppercase font-black text-gray-400 tracking-widest mb-3">Tu WhatsApp</label>
                                 <input
                                     type="tel"
@@ -162,14 +201,14 @@ export function OnboardingWizard({
                                 />
                             </div>
 
-                            <div className="bg-white p-8 rounded-3xl border-2 border-indigo-50 shadow-sm focus-within:border-indigo-600 transition-colors">
+                            <div className="bg-white p-8 rounded-3xl border-2 border-gray-100 shadow-sm focus-within:border-adhoc-violet/50 transition-colors">
                                 <label className="block text-[10px] uppercase font-black text-gray-400 tracking-widest mb-3">Hora del Briefing</label>
                                 <input
                                     type="time"
                                     required
                                     value={time}
                                     onChange={(e) => setTime(e.target.value)}
-                                    className="w-full text-4xl font-black text-indigo-600 focus:outline-none"
+                                    className="w-full text-4xl font-black text-adhoc-violet focus:outline-none"
                                 />
                             </div>
                         </div>
@@ -177,7 +216,7 @@ export function OnboardingWizard({
                         <button
                             type="submit"
                             disabled={isSaving}
-                            className="w-full bg-indigo-600 text-white h-16 rounded-2xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 disabled:opacity-50"
+                            className="w-full bg-adhoc-violet text-white h-16 rounded-2xl font-bold text-lg hover:bg-adhoc-violet/90 transition-all shadow-xl shadow-adhoc-violet/20 disabled:opacity-50"
                         >
                             {isSaving ? "Guardando..." : "Confirmar y Seguir"}
                         </button>
@@ -194,7 +233,7 @@ export function OnboardingWizard({
                     <div className="space-y-4">
                         <h1 className="text-4xl font-black text-gray-900 tracking-tight font-display">¡Todo listo, Che!</h1>
                         <div className="text-lg text-gray-500 font-medium space-y-4 leading-relaxed">
-                            <p>Mañana a las <span className="text-indigo-600 font-black">{time}</span> vas a recibir tu primer **Tuqui de tus mañanas**.</p>
+                            <p>Mañana a las <span className="text-adhoc-violet font-black">{time}</span> vas a recibir tu primer **Tuqui de tus mañanas**.</p>
                             <p className="bg-gray-50 p-6 rounded-2xl border border-gray-100 text-sm">
                                 🔔 <span className="font-bold">TIP:</span> Agendá este número en tus contactos como "Tuqui" para que los audios se carguen rápido.
                             </p>

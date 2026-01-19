@@ -57,8 +57,8 @@ export default async function Home() {
               <p className="text-gray-500 text-lg">Tu resumen diario está listo para las {timeLocal}.</p>
             </div>
             {isAnalyzing && (
-              <div className="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-full text-xs font-black animate-pulse flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
+              <div className="bg-adhoc-violet/10 text-adhoc-violet px-3 py-1.5 rounded-full text-xs font-black animate-pulse flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-adhoc-violet"></span>
                 ANALIZANDO PERFIL...
               </div>
             )}
@@ -68,7 +68,7 @@ export default async function Home() {
             {/* Status Card */}
             <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-8">
-                <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-adhoc-coral/10 text-adhoc-coral flex items-center justify-center">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
@@ -85,7 +85,7 @@ export default async function Home() {
             <Link href="/profile">
               <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow h-full cursor-pointer group">
                 <div className="flex items-center justify-between mb-8">
-                  <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-adhoc-violet/10 text-adhoc-violet flex items-center justify-center group-hover:bg-adhoc-violet/20 transition-colors">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
@@ -96,7 +96,7 @@ export default async function Home() {
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Tu Inteligencia</p>
-                  <p className="text-lg font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">Ver Mi Perfil</p>
+                  <p className="text-lg font-medium text-gray-900 group-hover:text-adhoc-violet transition-colors">Ver Mi Perfil</p>
                 </div>
               </div>
             </Link>
@@ -129,11 +129,11 @@ export default async function Home() {
 
   // LOGIN / LANDING PAGE (New Design)
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-[#0A0A0A] text-white flex flex-col items-center justify-center selection:bg-orange-500/30">
+    <div className="relative w-full h-screen overflow-hidden bg-[#0A0A0A] text-white flex flex-col items-center justify-center selection:bg-adhoc-coral/30">
 
       {/* Background Effects */}
-      <div className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] bg-orange-500/20 rounded-full blur-[120px] mix-blend-screen animate-pulse-slow"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-purple-600/10 rounded-full blur-[100px] mix-blend-screen"></div>
+      <div className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] bg-adhoc-coral/20 rounded-full blur-[120px] mix-blend-screen animate-pulse-slow"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-adhoc-violet/10 rounded-full blur-[100px] mix-blend-screen"></div>
 
       <div className="relative z-10 w-full max-w-md px-6 flex flex-col items-center text-center">
 

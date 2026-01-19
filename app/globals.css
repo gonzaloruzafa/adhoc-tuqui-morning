@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+@theme {
+  --color-adhoc-violet: #7C6CD8;
+  --color-adhoc-lavender: #BCAFEF;
+  --color-adhoc-coral: #FF7348;
+  --color-adhoc-mustard: #FEA912;
+
+  --font-sans: var(--font-apercu), system-ui, sans-serif;
+  --font-display: var(--font-new-kansas), Georgia, serif;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -33,4 +43,17 @@
   .hover-lift:hover {
     transform: translateY(-2px);
   }
+}
+
+body {
+  @apply font-sans antialiased bg-white text-gray-900;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply font-display tracking-tight;
 }

@@ -2,7 +2,9 @@
 
 import { auth } from "@/auth";
 import { getClient } from "@/lib/supabase/client";
+import { runProfileAnalysis } from "@/lib/intelligence/profile-analyzer";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 
 const ConfigSchema = z.object({
@@ -75,14 +77,19 @@ export async function retriggerProfileAnalysis() {
     // Mark as analyzing synchronously so the revalidation picks it up
     await db.from("tuqui_morning_users").update({ profile_analysis_status: "analyzing" }).eq("email", session.user.email);
 
-    const { runProfileAnalysis } = await import("@/lib/intelligence/profile-analyzer");
-
-    // Run the rest in background
-    runProfileAnalysis(session.user.email).catch(console.error);
+    // Run the rest in background using after()
+    after(async () => {
+        try {
+            await runProfileAnalysis(session!.user!.email!);
+            console.log(`✅ Profile analysis (retrigger) completed for ${session!.user!.email!}`);
+        } catch (e) {
+            console.error(`❌ Profile analysis (retrigger) failed for ${session!.user!.email!}:`, e);
+        }
+    });
 
     revalidatePath("/profile");
     revalidatePath("/");
-    return { success: true, message: "Análisis iniciado... se actualizará en unos segundos." };
+    return { success: true, message: "Análisis iniciado en segundo plano... se actualizará pronto." };
 }
 
 export async function updateUserProfile(data: { persona_description: string }) {

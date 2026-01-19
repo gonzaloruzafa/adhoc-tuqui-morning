@@ -1,15 +1,31 @@
-import textToSpeech from "@google-cloud/text-to-speech";
+import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import { getClient } from "@/lib/supabase/client";
 
-// Support explicitly passed credentials for Vercel/Serverless environments
-const client = new textToSpeech.TextToSpeechClient({
-    credentials: process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY ? {
-        client_email: process.env.GOOGLE_CLIENT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-    } : undefined
-});
+// Use a lazy getter to avoid global scope initialization errors
+let ttsClient: TextToSpeechClient | null = null;
+
+function getTTSClient() {
+    if (ttsClient) return ttsClient;
+
+    const email = process.env.GOOGLE_CLIENT_EMAIL;
+    const key = process.env.GOOGLE_PRIVATE_KEY;
+
+    if (!email || !key) {
+        throw new Error("Missing GOOGLE_CLIENT_EMAIL or GOOGLE_PRIVATE_KEY in environment");
+    }
+
+    ttsClient = new TextToSpeechClient({
+        credentials: {
+            client_email: email,
+            private_key: key.replace(/\\n/g, '\n'),
+        },
+    });
+    return ttsClient;
+}
 
 export async function generateAudio(text: string, userId: string) {
+    const client = getTTSClient();
+    // 1. Synthesize Speech
     // 1. Synthesize Speech
     const request = {
         input: { text },

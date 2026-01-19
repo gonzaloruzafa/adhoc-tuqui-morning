@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@auth/supabase-adapter": "^1.11.1",
-    "@google-cloud/text-to-speech": "^6.4.0",
     "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.90.1",
     "class-variance-authority": "^0.7.1",

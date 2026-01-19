@@ -124,10 +124,9 @@ export async function runProfileAnalysis(userEmail: string): Promise<void> {
         const accessToken = await getValidAccessToken(userEmail);
 
         const { fetchRecentEmails } = await import("@/lib/google/gmail");
-        const thirtyDaysAgo = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
         const emails = await fetchRecentEmails(accessToken, {
-            maxResults: 300,
-            q: `after:${thirtyDaysAgo}` // Broad search: archived, sent, inbox, etc.
+            maxResults: 500, // Increase to 500 for better depth
+            q: "" // No filters, just last 500 emails
         });
 
         if (emails.length < 5) throw new Error("Not enough emails for analysis");

@@ -47,7 +47,7 @@ export function ProfileEditor({ initialBio }: ProfileEditorProps) {
         <div className="space-y-6">
             <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-gray-900 tracking-tight">Tu Bio Profesional</h2>
+                    <h2 className="text-lg font-bold text-gray-900 tracking-tight font-display">Tu Bio Profesional</h2>
                     {!isEditing ? (
                         <button
                             onClick={() => setIsEditing(true)}

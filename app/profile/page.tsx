@@ -48,7 +48,7 @@ export default async function ProfilePage() {
         <div className="max-w-4xl mx-auto px-6 py-12 animate-in fade-in duration-500">
             <div className="flex items-center justify-between mb-10">
                 <div>
-                    <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2 font-kansas">
+                    <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2 font-display">
                         Tu Perfil <span className="text-indigo-600">Tuqui</span>
                     </h1>
                     <p className="text-gray-500 font-medium">Lo que la IA dedujo de tu historial de emails.</p>
@@ -67,7 +67,7 @@ export default async function ProfilePage() {
                 {/* Identity Sidebar */}
                 <div className="space-y-6">
                     <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                        <h2 className="text-lg font-bold text-indigo-600 mb-6 flex items-center gap-2 tracking-tight">
+                        <h2 className="text-lg font-bold text-indigo-600 mb-6 flex items-center gap-2 tracking-tight font-display">
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
@@ -76,21 +76,31 @@ export default async function ProfilePage() {
                         <dl className="space-y-6">
                             <div>
                                 <dt className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Rol & Seniority</dt>
-                                <dd className="text-lg font-bold text-gray-900 tracking-tight">{profile.inferred_role} <span className="text-gray-300 mx-1">/</span> {profile.inferred_seniority}</dd>
+                                <dd className="text-lg font-bold text-gray-900 tracking-tight">
+                                    {profile.inferred_role || "Sin detectar"}
+                                    <span className="text-gray-300 mx-1">/</span>
+                                    <span className="text-gray-500 font-medium">{profile.inferred_seniority || "Pendiente"}</span>
+                                </dd>
                             </div>
                             <div>
                                 <dt className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Empresa / Industria</dt>
-                                <dd className="text-lg font-bold text-gray-900 tracking-tight">{profile.inferred_company} <br /> <span className="text-sm text-gray-400">{profile.inferred_industry}</span></dd>
+                                <dd className="text-lg font-bold text-gray-900 tracking-tight">
+                                    {profile.inferred_company || "No identificada"}
+                                    <br />
+                                    <span className="text-sm text-gray-400 font-medium">{profile.inferred_industry || "Industria pendiente"}</span>
+                                </dd>
                             </div>
                             <div>
                                 <dt className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Foco Semanal</dt>
-                                <dd className="text-md font-bold text-indigo-600 leading-tight">"{profile.current_focus}"</dd>
+                                <dd className="text-md font-bold text-indigo-600 leading-tight">
+                                    {profile.current_focus ? `"${profile.current_focus}"` : "Aún analizando foco..."}
+                                </dd>
                             </div>
                         </dl>
                     </div>
 
                     <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                        <h2 className="text-lg font-bold text-gray-900 mb-4 tracking-tight">KPIs de Análisis</h2>
+                        <h2 className="text-lg font-bold text-gray-900 mb-4 tracking-tight font-display">KPIs de Análisis</h2>
                         <div className="space-y-4">
                             <div className="flex justify-between items-center">
                                 <span className="text-sm text-gray-500 font-medium">Emails analizados</span>

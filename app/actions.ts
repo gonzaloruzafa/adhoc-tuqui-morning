@@ -37,7 +37,8 @@ export async function saveConfiguration(formData: FormData) {
         .from("tuqui_morning_users")
         .update({
             phone_whatsapp: phone || null,
-            timezone: timezone
+            timezone: timezone,
+            onboarding_completed: true
         })
         .eq("email", session.user.email);
 
@@ -70,14 +71,18 @@ export async function retriggerProfileAnalysis() {
     const session = await auth();
     if (!session?.user?.email) throw new Error("Unauthorized");
 
+    const db = getClient();
+    // Mark as analyzing synchronously so the revalidation picks it up
+    await db.from("tuqui_morning_users").update({ profile_analysis_status: "analyzing" }).eq("email", session.user.email);
+
     const { runProfileAnalysis } = await import("@/lib/intelligence/profile-analyzer");
 
-    // Non-blocking trigger or await? 
-    // The user said "recalculate button", so we can do it asynchronously and return success
+    // Run the rest in background
     runProfileAnalysis(session.user.email).catch(console.error);
 
     revalidatePath("/profile");
-    return { success: true, message: "Análisis iniciado..." };
+    revalidatePath("/");
+    return { success: true, message: "Análisis iniciado... se actualizará en unos segundos." };
 }
 
 export async function updateUserProfile(data: { persona_description: string }) {

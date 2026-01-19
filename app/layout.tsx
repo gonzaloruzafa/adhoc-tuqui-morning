@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
 import localFont from 'next/font/local'
 import './globals.css'
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 const newKansas = localFont({
   src: [
@@ -33,7 +36,11 @@ export const metadata: Metadata = {
   title: 'Tuqui Mañana',
   description: 'Tu copiloto de la mañana',
   icons: {
-    icon: '/favicon.png',
+    icon: [
+      { url: '/favicon.png', type: 'image/png' },
+      { url: '/favicon.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: '/favicon.png',
   },
 }
 
@@ -44,7 +51,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${newKansas.variable} ${apercu.variable} font-sans antialiased bg-white text-gray-900`}>
+      <body className={`${inter.variable} ${newKansas.variable} ${apercu.variable} font-sans antialiased bg-white text-gray-900`}>
         {children}
       </body>
     </html>

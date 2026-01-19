@@ -1,5 +1,6 @@
 import { auth, signIn, signOut } from "@/auth"
 import Link from 'next/link'
+import { redirect } from "next/navigation";
 import { getUserConfig } from "@/app/actions";
 import { getClient } from "@/lib/supabase/client";
 import Image from "next/image"
@@ -17,9 +18,13 @@ export default async function Home() {
     const db = getClient();
     const { data: userProfile } = await db
       .from("tuqui_morning_users")
-      .select("profile_analysis_status")
+      .select("profile_analysis_status, onboarding_completed")
       .eq("email", session.user.email)
       .single();
+
+    if (userProfile && !userProfile.onboarding_completed) {
+      redirect("/onboarding");
+    }
 
     const isAnalyzing = userProfile?.profile_analysis_status === 'analyzing';
 
@@ -48,7 +53,7 @@ export default async function Home() {
         <main className="max-w-3xl mx-auto px-6 py-12">
           <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700 flex justify-between items-start">
             <div>
-              <h1 className="text-4xl font-semibold text-gray-900 tracking-tight mb-2">Hola, {firstName}.</h1>
+              <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2 font-display">Hola, {firstName}.</h1>
               <p className="text-gray-500 text-lg">Tu resumen diario está listo para las {timeLocal}.</p>
             </div>
             {isAnalyzing && (
@@ -134,12 +139,12 @@ export default async function Home() {
 
         {/* Logo Adhoc */}
         <div className="mb-12 opacity-0 animate-in fade-in duration-1000 slide-in-from-top-4">
-          <Image src="/adhoc-logo-white.png" alt="Adhoc" width={40} height={40} className="mx-auto opacity-80" />
+          <Image src="/adhoc-logo.png" alt="Adhoc" width={40} height={40} className="mx-auto grayscale invert brightness-200" />
         </div>
 
         {/* Main Content */}
         <div className="space-y-6">
-          <h1 className="text-5xl md:text-6xl font-semibold tracking-tighter leading-tight bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent opacity-0 animate-in fade-in duration-1000 slide-in-from-bottom-4 delay-100">
+          <h1 className="text-5xl md:text-6xl font-black tracking-tighter leading-tight bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent opacity-0 animate-in fade-in duration-1000 slide-in-from-bottom-4 delay-100 font-display">
             Tuqui de tus<br />mañanas
           </h1>
 

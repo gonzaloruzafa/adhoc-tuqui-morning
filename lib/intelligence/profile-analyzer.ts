@@ -121,7 +121,11 @@ export async function analyzeUserProfile(
 export async function runProfileAnalysis(userEmail: string): Promise<void> {
     console.log(`[ProfileAnalyzer] Starting analysis for ${userEmail}`);
     const db = getClient();
-    await db.from("tuqui_morning_users").update({ profile_analysis_status: "analyzing" }).eq("email", userEmail);
+    await db.from("tuqui_morning_users").update({
+        profile_analysis_status: "analyzing",
+        profile_analysis_count: 0,
+        profile_analysis_total: 0
+    }).eq("email", userEmail);
 
     try {
         const { data: user } = await db.from("tuqui_morning_users").select("name").eq("email", userEmail).single();
@@ -131,8 +135,15 @@ export async function runProfileAnalysis(userEmail: string): Promise<void> {
         const { fetchRecentEmails } = await import("@/lib/google/gmail");
         console.log(`[ProfileAnalyzer] Fetching emails...`);
         const emails = await fetchRecentEmails(accessToken, {
-            maxResults: 150, // Reduced from 500 for serverless reliability
-            q: "" // Use the fix in gmail.ts to get all mail
+            maxResults: 100, // Optimized for reliability
+            q: "", // Use the fix in gmail.ts to get all mail
+            onProgress: async (count, total) => {
+                console.log(`[ProfileAnalyzer] Progress: ${count}/${total}`);
+                await db.from("tuqui_morning_users").update({
+                    profile_analysis_count: count,
+                    profile_analysis_total: total
+                }).eq("email", userEmail);
+            }
         });
 
         console.log(`[ProfileAnalyzer] Found ${emails.length} emails. Analyzing...`);

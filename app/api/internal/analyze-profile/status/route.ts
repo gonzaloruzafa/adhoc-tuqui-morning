@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     const db = getClient();
     const { data: user, error } = await db
         .from("tuqui_morning_users")
-        .select("profile_analysis_status")
+        .select("profile_analysis_status, profile_analysis_count, profile_analysis_total")
         .eq("email", email)
         .single();
 
@@ -18,5 +18,9 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ status: user.profile_analysis_status });
+    return NextResponse.json({
+        status: user.profile_analysis_status,
+        count: user.profile_analysis_count,
+        total: user.profile_analysis_total
+    });
 }

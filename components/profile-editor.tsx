@@ -1,20 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { updateUserProfile, retriggerProfileAnalysis } from "@/app/actions";
 import { useRouter } from "next/navigation";
 
 interface ProfileEditorProps {
     initialBio: string | null;
     profileStatus?: string;
+    userEmail: string;
 }
 
-export function ProfileEditor({ initialBio, profileStatus }: ProfileEditorProps) {
+export function ProfileEditor({ initialBio, profileStatus, userEmail }: ProfileEditorProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [bio, setBio] = useState(initialBio || "");
     const [isSaving, setIsSaving] = useState(false);
     const [isRecalculating, setIsRecalculating] = useState(profileStatus === 'analyzing');
+    const [progress, setProgress] = useState({ count: 0, total: 0 });
     const router = useRouter();
+
+    // Polling for progress when recalculating
+    useEffect(() => {
+        if (!isRecalculating) return;
+
+        const interval = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/internal/analyze-profile/status?email=${userEmail}`);
+                const data = await res.json();
+
+                if (data.count && data.total) {
+                    setProgress({ count: data.count, total: data.total });
+                }
+
+                if (data.status === 'completed' || data.status === 'failed') {
+                    setIsRecalculating(false);
+                    router.refresh();
+                }
+            } catch (e) {
+                console.error("Progress check failed", e);
+            }
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [isRecalculating, userEmail, router]);
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -91,7 +118,7 @@ export function ProfileEditor({ initialBio, profileStatus }: ProfileEditorProps)
                 )}
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-4">
                 <button
                     onClick={handleRecalculate}
                     disabled={isRecalculating}
@@ -102,6 +129,21 @@ export function ProfileEditor({ initialBio, profileStatus }: ProfileEditorProps)
                     </svg>
                     {isRecalculating ? "Analizando emails..." : "Recalcular con Inteligencia"}
                 </button>
+
+                {isRecalculating && progress.total > 0 && (
+                    <div className="w-full max-w-xs space-y-2">
+                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-indigo-500">
+                            <span>Progreso</span>
+                            <span>{progress.count} / {progress.total}</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-1.5">
+                            <div
+                                className="bg-indigo-600 h-1.5 rounded-full transition-all duration-500"
+                                style={{ width: `${Math.round((progress.count / progress.total) * 100)}%` }}
+                            ></div>
+                        </div>
+                    </div>
+                )}
             </div>
             <p className="text-[10px] text-gray-400 text-center font-medium max-w-xs mx-auto">
                 El recalculado analizará tus últimos 300 emails (incluyendo Gmail, Enviados y Archivados) para refinar tu perfil.

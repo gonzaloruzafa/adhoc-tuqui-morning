@@ -27,16 +27,21 @@ export function OnboardingWizard({
     const [isSaving, setIsSaving] = useState(false);
     const router = useRouter();
 
+    const [progress, setProgress] = useState({ count: 0, total: 0 });
+
     // Step 1: Polling for profile completion
     useEffect(() => {
         if (step !== 1 || status === 'completed') return;
 
         const interval = setInterval(async () => {
-            const res = await fetch(`/api/auth/session`); // Simple way to get fresh session data if needed, or create a specific status endpoint
-            // Better: create a simple status endpoint or just use a fetch to a route that returns user status
             try {
                 const statusRes = await fetch(`/api/internal/analyze-profile/status?email=${userEmail}`);
                 const data = await statusRes.json();
+
+                if (data.count && data.total) {
+                    setProgress({ count: data.count, total: data.total });
+                }
+
                 if (data.status === 'completed') {
                     setStatus('completed');
                     setStep(2);
@@ -104,14 +109,31 @@ export function OnboardingWizard({
                         </p>
                     </div>
                     <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100/50">
-                        <div className="flex items-center gap-4 text-left">
-                            <div className="w-1.5 h-12 bg-indigo-500 rounded-full animate-pulse"></div>
-                            <p className="text-sm font-bold text-indigo-700 leading-tight">
-                                "Esto nos permite armarte un briefing 100% a medida, descartando el spam y priorizando lo que importa."
-                            </p>
-                        </div>
+                        {progress.total > 0 ? (
+                            <div className="space-y-3">
+                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-indigo-700">
+                                    <span>Analizando historial</span>
+                                    <span>{progress.count} / {progress.total}</span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div
+                                        className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.round((progress.count / progress.total) * 100)}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-4 text-left">
+                                <div className="w-1.5 h-12 bg-indigo-500 rounded-full animate-pulse"></div>
+                                <p className="text-sm font-bold text-indigo-700 leading-tight">
+                                    "Esto nos permite armarte un briefing 100% a medida, descartando el spam y priorizando lo que importa."
+                                </p>
+                            </div>
+                        )}
                     </div>
-                    <p className="text-xs text-gray-400 font-black uppercase tracking-widest animate-pulse">Analizando historial de Gmail...</p>
+                    <p className="text-xs text-gray-400 font-black uppercase tracking-widest animate-pulse">
+                        {progress.total > 0 ? "Bajando contenido de emails..." : "Analizando historial de Gmail..."}
+                    </p>
                 </div>
             )}
 

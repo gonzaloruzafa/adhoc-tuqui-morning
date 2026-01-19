@@ -27,10 +27,16 @@ export async function processRun(runId: string) {
         // 2. Auth
         const accessToken = await getValidAccessToken(user.email);
 
-        // 3. Fetch Data
+        // 3. Fetch Data (Resilient)
         const [emails, events] = await Promise.all([
-            fetchRecentEmails(accessToken, { hoursBack: 24 }),
-            fetchTodayEvents(accessToken, user.timezone)
+            fetchRecentEmails(accessToken, { hoursBack: 24 }).catch(e => {
+                console.error("Pipeline: Gmail fetch failed", e);
+                return [];
+            }),
+            fetchTodayEvents(accessToken, user.timezone).catch(e => {
+                console.error("Pipeline: Calendar fetch failed", e);
+                return [];
+            })
         ]);
 
         // 4. Intelligence

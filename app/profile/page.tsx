@@ -43,7 +43,7 @@ export default async function ProfilePage() {
                             Volver al Inicio
                         </Link>
                         {!isAnalyzing && (
-                            <ProfileEditor initialBio={null} profileStatus={user?.profile_analysis_status} />
+                            <ProfileEditor initialBio={null} profileStatus={user?.profile_analysis_status} userEmail={session.user.email} />
                         )}
                     </div>
                 </div>
@@ -68,7 +68,7 @@ export default async function ProfilePage() {
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                 {/* Editable Bio & Recalculate */}
                 <div className="lg:col-span-2">
-                    <ProfileEditor initialBio={profile.persona_description} profileStatus={user?.profile_analysis_status} />
+                    <ProfileEditor initialBio={profile.persona_description} profileStatus={user?.profile_analysis_status} userEmail={session.user.email} />
                 </div>
 
                 {/* Identity Sidebar */}

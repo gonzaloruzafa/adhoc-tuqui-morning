@@ -32,7 +32,7 @@ export default async function Home() {
               <div className="relative w-8 h-8">
                 <Image src="/adhoc-logo.png" alt="Adhoc" fill className="object-contain" />
               </div>
-              <span className="font-medium text-gray-900">Tuqui Morning</span>
+              <span className="font-medium text-gray-900">Tuqui de tus mañanas</span>
             </div>
             <form action={async () => {
               "use server"
@@ -140,7 +140,7 @@ export default async function Home() {
         {/* Main Content */}
         <div className="space-y-6">
           <h1 className="text-5xl md:text-6xl font-semibold tracking-tighter leading-tight bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent opacity-0 animate-in fade-in duration-1000 slide-in-from-bottom-4 delay-100">
-            Tuqui<br />Morning
+            Tuqui de tus<br />mañanas
           </h1>
 
           <p className="text-lg text-white/60 font-medium leading-relaxed max-w-[300px] mx-auto opacity-0 animate-in fade-in duration-1000 slide-in-from-bottom-4 delay-300">

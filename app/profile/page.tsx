@@ -27,7 +27,7 @@ export default async function ProfilePage() {
                     <h1 className="text-3xl font-bold text-gray-900 mb-4">Tu Perfil Inteligente</h1>
                     <p className="text-gray-600 mb-8 max-w-md mx-auto">
                         {user?.profile_analysis_status === 'analyzing'
-                            ? "Kikiriki está analizando tu historial para conocerte mejor. Esto puede tardar un minuto..."
+                            ? "Tuqui está analizando tu historial para conocerte mejor. Esto puede tardar un minuto..."
                             : "Todavía no terminamos de analizar tu perfil. Logueate de nuevo o esperá un momento."}
                     </p>
                     <div className="flex justify-center gap-4">
@@ -45,7 +45,7 @@ export default async function ProfilePage() {
             <div className="flex items-center justify-between mb-10">
                 <div>
                     <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">
-                        Tu Perfil <span className="text-indigo-600">Kikiriki</span>
+                        Tu Perfil <span className="text-indigo-600">Tuqui</span>
                     </h1>
                     <p className="text-gray-500 font-medium">Lo que la IA dedujo de tu historial de emails.</p>
                 </div>
@@ -134,7 +134,7 @@ export default async function ProfilePage() {
             </div>
 
             <p className="mt-10 text-center text-xs text-gray-400 font-medium">
-                Kikiriki analizó {profile.emails_analyzed} emails el {new Date(profile.last_analysis_at).toLocaleDateString()}.
+                Tuqui analizó {profile.emails_analyzed} emails el {new Date(profile.last_analysis_at).toLocaleDateString()}.
             </p>
         </div>
     );

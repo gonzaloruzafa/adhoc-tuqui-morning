@@ -42,7 +42,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     }
 
                     // ========================================
-                    // Kikiriki v2.0: Trigger Profile Analysis & Welcome Run
+                    // Tuqui v2.0: Trigger Profile Analysis & Welcome Run
                     // ========================================
                     const { data: userData } = await db
                         .from('tuqui_morning_users')

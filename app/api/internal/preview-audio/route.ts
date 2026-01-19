@@ -51,7 +51,11 @@ export async function POST(request: Request) {
             userName: user.name || "Usuario",
             date: new Date(),
             timezone: user.timezone,
-            events: categorizedEvents,
+            events: categorizedEvents.map(ce => ({
+                title: ce.event.title,
+                startTime: ce.event.startTime,
+                priority: ce.priority
+            })),
             emails: importantEmails.map(e => ({ email: e.email })),
         });
 

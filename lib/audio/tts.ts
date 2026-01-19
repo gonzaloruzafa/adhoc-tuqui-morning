@@ -1,7 +1,13 @@
 import textToSpeech from "@google-cloud/text-to-speech";
 import { getClient } from "@/lib/supabase/client";
 
-const client = new textToSpeech.TextToSpeechClient();
+// Support explicitly passed credentials for Vercel/Serverless environments
+const client = new textToSpeech.TextToSpeechClient({
+    credentials: process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY ? {
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    } : undefined
+});
 
 export async function generateAudio(text: string, userId: string) {
     // 1. Synthesize Speech

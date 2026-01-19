@@ -1,8 +1,58 @@
 "use client";
 
 import { saveConfiguration } from "@/app/actions";
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import { toast } from "sonner";
+
+function PreviewControl() {
+    const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState<{ audioUrl: string, script: string } | null>(null);
+
+    async function handlePreview() {
+        setLoading(true);
+        setResult(null);
+        try {
+            const res = await fetch("/api/internal/preview-audio", { method: "POST" });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed");
+            setResult(data);
+            toast.success("Audio generado con éxito");
+        } catch (e: any) {
+            toast.error("Error generando audio: " + e.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    return (
+        <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-200">
+            <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700">Audio Preview</span>
+                <button
+                    type="button"
+                    onClick={handlePreview}
+                    disabled={loading}
+                    className="text-xs bg-adhoc-violet text-white px-3 py-1.5 rounded-lg hover:bg-adhoc-violet/90 transition-colors disabled:opacity-50"
+                >
+                    {loading ? "Generando..." : "Generar Audio"}
+                </button>
+            </div>
+
+            {result && (
+                <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                    <audio controls src={result.audioUrl} className="w-full h-8" />
+
+                    <details className="text-xs text-gray-500">
+                        <summary className="cursor-pointer font-medium hover:text-adhoc-violet">Ver Script</summary>
+                        <div className="mt-2 p-2 bg-white rounded border border-gray-100 whitespace-pre-wrap max-h-40 overflow-y-auto">
+                            {result.script}
+                        </div>
+                    </details>
+                </div>
+            )}
+        </div>
+    )
+}
 
 interface ConfigFormProps {
     initialData: {
@@ -92,33 +142,38 @@ export function ConfigForm({ initialData }: ConfigFormProps) {
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-adhoc-violet to-adhoc-violet/90 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-adhoc-violet/30 transition-all duration-300 hover:shadow-xl hover:shadow-adhoc-violet/40 hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-adhoc-violet/30 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    className="w-full rounded-2xl bg-adhoc-violet px-6 py-4 text-base font-semibold text-white shadow-lg transition-all hover:bg-adhoc-violet/90 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                        {isPending ? (
-                            <>
-                                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Guardando...
-                            </>
-                        ) : (
-                            <>
-                                <svg className="w-5 h-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                                Guardar Cambios
-                            </>
-                        )}
-                    </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-adhoc-violet/0 via-white/20 to-adhoc-violet/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                    {isPending ? (
+                        <>
+                            <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>Guardando...</span>
+                        </>
+                    ) : (
+                        <>
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>Guardar Cambios</span>
+                        </>
+                    )}
                 </button>
             </div>
 
-            {/* Force Send Button */}
-            <div className="pt-2 border-t border-gray-100 mt-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">Zona de Pruebas</h3>
+            {/* Debug & Preview Zone */}
+            <div className="pt-6 border-t border-gray-100 mt-6 space-y-4">
+                <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                    Zona de Pruebas & Debugging
+                </h3>
+
+                {/* Audio Preview */}
+                <PreviewControl />
+
+                {/* Force Send */}
                 <button
                     type="button"
                     onClick={async () => {
@@ -129,14 +184,14 @@ export function ConfigForm({ initialData }: ConfigFormProps) {
                             }),
                             {
                                 loading: 'Iniciando briefing...',
-                                success: 'Briefing iniciado! Te llegará por WhatsApp en breve.',
+                                success: 'Briefing iniciado! Te llegará por WhatsApp hoy.',
                                 error: 'Error al iniciar briefing'
                             }
                         );
                     }}
-                    className="w-full rounded-xl bg-white border-2 border-dashed border-gray-300 px-4 py-3 text-sm font-medium text-gray-600 hover:border-adhoc-violet hover:text-adhoc-violet transition-colors focus:outline-none focus:ring-4 focus:ring-adhoc-violet/10"
+                    className="w-full rounded-xl bg-white border border-gray-200 px-4 py-3 text-sm font-medium text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-colors"
                 >
-                    Forzar Envío Ahora
+                    Forzar Envío (WhatsApp)
                 </button>
             </div>
         </form>

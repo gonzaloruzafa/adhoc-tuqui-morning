@@ -79,10 +79,25 @@ export async function generateAudio(text: string, userId: string) {
 
     // 2. Upload to Supabase Storage
     const db = getClient();
-    const filename = `${userId}/${Date.now()}.wav`; // Changed to .wav as it's more accurate now
+    const bucketName = 'briefings';
+
+    // Verify bucket exists, if not try to create it (Admin only)
+    const { data: buckets } = await db.storage.listBuckets();
+    if (!buckets?.find(b => b.name === bucketName)) {
+        console.log(`Creating missing bucket: ${bucketName}`);
+        const { error: createError } = await db.storage.createBucket(bucketName, {
+            public: false, // We use signed URLs for security
+        });
+        if (createError) {
+            console.error("Failed to create bucket:", createError);
+            throw new Error(`Storage bucket '${bucketName}' missing and could not be created.`);
+        }
+    }
+
+    const filename = `${userId}/${Date.now()}.wav`;
 
     const { error: uploadError } = await db.storage
-        .from('briefings')
+        .from(bucketName)
         .upload(filename, audioBuffer, {
             contentType: 'audio/wav',
             upsert: true

@@ -45,19 +45,29 @@ export async function GET(request: Request) {
         if (!error && run) {
             triggeredRuns.push(run.id);
 
-            // Trigger Pipeline Asynchronously (or via queue)
-            // In serverless, we can just call an internal API endpoint or just run logic if timeout allows
-            // For reliability, better to use QStash or similar.
-            // For MVP, we'll try to fetch our own API endpoint to decouple
+            // Trigger Pipeline Asynchronously
             fetch(`${process.env.NEXTAUTH_URL}/api/internal/run-pipeline`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ runId: run.id })
             }).catch(e => console.error("Async trigger failed", e));
 
-            // Calcluate Next Run (Simple +24h logic for now, should respect timezone and days)
-            const nextRun = new Date(new Date(schedule.next_run_at).getTime() + 24 * 60 * 60 * 1000);
-            await db.from("tuqui_morning_schedules").update({ next_run_at: nextRun.toISOString() }).eq("id", schedule.id);
+            // Calculate Next Run (Respecting days_of_week)
+            // Current schedule.next_run_at is the trigger time. 
+            // We want the same time but on the next allowed day.
+            let nextDate = new Date(new Date(schedule.next_run_at).getTime() + 24 * 60 * 60 * 1000);
+
+            // Loop until we find a day that matches days_of_week
+            // 0=Sunday, 1=Monday...
+            const allowedDays = schedule.days_of_week || [1, 2, 3, 4, 5];
+            while (!allowedDays.includes(nextDate.getDay())) {
+                nextDate = new Date(nextDate.getTime() + 24 * 60 * 60 * 1000);
+            }
+
+            await db.from("tuqui_morning_schedules").update({
+                next_run_at: nextDate.toISOString(),
+                updated_at: new Date().toISOString()
+            }).eq("id", schedule.id);
         }
     }
 

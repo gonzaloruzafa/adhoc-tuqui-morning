@@ -1,81 +1,152 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { EmailSummary } from "@/lib/google/gmail";
-// Fix: Import types from heuristics return or define locally if complex
-// Reusing heuristics output structure
-interface EssentialEvent {
-    event: {
-        title: string;
-        startTime: Date;
-    };
-    priority: string;
-}
-interface EssentialEmail {
-    email: {
-        from: string;
-        subject: string;
-    }
-}
+import { UserProfile } from "./profile-analyzer";
+import { NewsItem } from "./news";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-export function generateBriefingPrompt(input: {
+export interface EssentialEvent {
+    title: string;
+    startTime: Date;
+    priority?: "high" | "medium" | "low";
+}
+
+export interface EssentialEmail {
+    email: {
+        from: string;
+        fromEmail: string;
+        subject: string;
+    };
+    isVIP?: boolean;
+}
+
+interface BriefingInput {
     userName: string;
     date: Date;
     timezone: string;
     events: EssentialEvent[];
     emails: EssentialEmail[];
-}): string {
-    const { userName, date, timezone, events, emails } = input;
+    news?: NewsItem[];
+    profile?: UserProfile | null;
+}
+
+const CLOSING_PHRASES = {
+    monday: [
+        "Arrancamos la semana. Dale con todo.",
+        "Lunes, día de empezar fuerte. Vos podés.",
+        "Nueva semana, nuevas oportunidades. A por ellas.",
+    ],
+    friday: [
+        "Viernes, último empujón de la semana.",
+        "Ya casi terminamos la semana. Un esfuerzo más.",
+        "Viernes, cerrá la semana con todo.",
+    ],
+    general: [
+        "Dale para adelante.",
+        "Buen día, hacelo tuyo.",
+        "Arrancá con todo.",
+        "Éxitos hoy.",
+    ],
+    random_facts: [
+        "Dato random: el primer email se envió en 1971. Ahora te estoy resumiendo los tuyos.",
+        "Dato del día: tu cerebro procesa 70,000 pensamientos por día. Este audio te ahorra unos cuantos.",
+        "Fun fact: hoy es un gran día para ser extraordinario.",
+        "Dato curioso: el café tarda 20 minutos en hacer efecto, así que estamos a tiempo.",
+    ],
+};
+
+function selectClosingPhrase(date: Date, profile?: UserProfile | null): string {
+    const dayOfWeek = date.getDay();
+
+    if (dayOfWeek === 1) return CLOSING_PHRASES.monday[Math.floor(Math.random() * CLOSING_PHRASES.monday.length)];
+    if (dayOfWeek === 5) return CLOSING_PHRASES.friday[Math.floor(Math.random() * CLOSING_PHRASES.friday.length)];
+
+    if (Math.random() < 0.4) {
+        return CLOSING_PHRASES.random_facts[Math.floor(Math.random() * CLOSING_PHRASES.random_facts.length)];
+    }
+
+    return CLOSING_PHRASES.general[Math.floor(Math.random() * CLOSING_PHRASES.general.length)];
+}
+
+export function generateBriefingPrompt(input: BriefingInput): string {
+    const { userName, date, timezone, events, emails, news, profile } = input;
 
     const dateStr = date.toLocaleDateString("es-AR", {
         weekday: "long",
-        year: "numeric",
-        month: "long",
         day: "numeric",
+        month: "long",
         timeZone: timezone,
     });
 
     const eventsSection = events.slice(0, 5).map((e) => {
-        const time = e.event.startTime.toLocaleTimeString("es-AR", {
+        const time = e.startTime.toLocaleTimeString("es-AR", {
             hour: "2-digit",
             minute: "2-digit",
             timeZone: timezone,
         });
-        return `- ${time}: ${e.event.title} (${e.priority})`;
+        const priority = e.priority === "high" ? " [IMPORTANTE]" : "";
+        return `- ${time}: ${e.title}${priority}`;
     }).join("\n");
 
     const emailsSection = emails.slice(0, 5).map((e) => {
-        return `- De: ${e.email.from} | Asunto: ${e.email.subject}`;
+        const vipMark = e.isVIP ? " [VIP]" : "";
+        return `- De: ${e.email.from}${vipMark} | Asunto: ${e.email.subject}`;
     }).join("\n");
 
-    return `
-Sos un asistente personal que prepara un briefing matutino para ${userName}.
-Generá un SCRIPT DE AUDIO de 60-90 segundos (máx 150 palabras).
+    const newsSection = news && news.length > 0 ? `
+NOTICIAS RELEVANTES:
+${news.map(n => `- ${n.title}: ${n.content.slice(0, 100)}...`).join("\n")}
+` : "";
 
-FECHA: ${dateStr}
+    const profileSection = profile ? `
+PERFIL DEL USUARIO (usalo para personalizar):
+- Rol: ${profile.inferred_role || "No determinado"}
+- Empresa: ${profile.inferred_company || "No determinada"}
+- Temas que le importan: ${profile.recurring_topics?.join(", ") || "Varios"}
+- Foco actual: ${profile.current_focus || "No determinado"}
+- Tono preferido: ${profile.inferred_tone || "casual"}
+- Nombre a usar: ${profile.preferred_greeting || userName.split(" ")[0]}
+` : "";
+
+    const closingPhrase = selectClosingPhrase(date, profile);
+
+    return `
+Sos el asistente personal de ${userName}. Generá un briefing matutino en AUDIO.
+
+${profileSection}
+
+FECHA: Hoy es ${dateStr}
 
 REUNIONES DE HOY:
-${eventsSection || "No hay reuniones programadas."}
+${eventsSection || "No hay reuniones programadas para hoy."}
 
-EMAILS IMPORTANTES:
-${emailsSection || "No hay emails destacados."}
+EMAILS IMPORTANTES (últimas 24h):
+${emailsSection || "No hay emails urgentes."}
 
-INSTRUCCIONES:
-1. Tono NATURAL y CONVERSACIONAL (será hablado)
-2. Saludo breve con nombre y fecha
-3. Máximo 3-4 reuniones, 2-3 emails
-4. Resaltá lo urgente
-5. Cierre positivo y breve
-6. Español argentino (vos, conjugaciones argentinas)
-7. NO uses bullets - es para ser HABLADO
-8. NO saludes con "Hola soy tu asistente", andá directo al grano: "Buen día Gonza, hoy tenés..."
+${newsSection}
+
+CIERRE SUGERIDO:
+"${closingPhrase}"
+
+═══════════════════════════════════════════════
+INSTRUCCIONES PARA EL SCRIPT DE AUDIO:
+═══════════════════════════════════════════════
+
+1. SALUDO: Cálido y personalizado, usando el apodo o nombre preferido.
+2. AGENDA: Máximo 3-4 reuniones. Si es el primer briefing del día (o bienvenida), mencionalo.
+3. EMAILS: Resaltá si hay de VIPs o temas que le importan según su perfil.
+4. NOTICIAS: Incluí brevemente si hay algo interesante de las noticias relevantes.
+5. CIERRE: Usá el cierre sugerido o adaptalo.
+6. TONO: Español argentino (vos, che, etc.). Conversacional, rápido y cálido.
+7. FORMATO: Sin bullets. Texto plano para ser HABLADO. Máximo 150 palabras.
 
 Generá el script ahora:
 `;
 }
 
-export async function generateBriefingScript(prompt: string) {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" }); // Using faster flash model
+export async function generateBriefingScript(
+    prompt: string
+): Promise<{ script: string; tokensUsed: number }> {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
     const result = await model.generateContent({
         contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -85,8 +156,14 @@ export async function generateBriefingScript(prompt: string) {
         },
     });
 
-    return {
-        script: result.response.text(),
-        tokensUsed: result.response.usageMetadata?.totalTokenCount || 0,
-    };
+    const script = result.response.text();
+    const tokensUsed = result.response.usageMetadata?.totalTokenCount || 0;
+
+    const cleanScript = script
+        .replace(/\*\*/g, "")
+        .replace(/\*/g, "")
+        .replace(/^[-•]\s*/gm, "")
+        .trim();
+
+    return { script: cleanScript, tokensUsed };
 }

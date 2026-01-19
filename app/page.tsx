@@ -1,6 +1,7 @@
 import { auth, signIn, signOut } from "@/auth"
 import Link from 'next/link'
 import { getUserConfig } from "@/app/actions";
+import { getClient } from "@/lib/supabase/client";
 import Image from "next/image"
 
 export default async function Home() {
@@ -12,6 +13,15 @@ export default async function Home() {
     const isEnabled = config?.enabled ?? true;
     const timeLocal = config?.timeLocal || "07:00";
     const firstName = session.user.name?.split(' ')[0] || 'Viajero';
+
+    const db = getClient();
+    const { data: userProfile } = await db
+      .from("tuqui_morning_users")
+      .select("profile_analysis_status")
+      .eq("email", session.user.email)
+      .single();
+
+    const isAnalyzing = userProfile?.profile_analysis_status === 'analyzing';
 
     return (
       <div className="min-h-screen bg-gray-50/50">
@@ -36,12 +46,20 @@ export default async function Home() {
         </header>
 
         <main className="max-w-3xl mx-auto px-6 py-12">
-          <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <h1 className="text-4xl font-semibold text-gray-900 tracking-tight mb-2">Hola, {firstName}.</h1>
-            <p className="text-gray-500 text-lg">Tu resumen diario está listo para las {timeLocal}.</p>
+          <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700 flex justify-between items-start">
+            <div>
+              <h1 className="text-4xl font-semibold text-gray-900 tracking-tight mb-2">Hola, {firstName}.</h1>
+              <p className="text-gray-500 text-lg">Tu resumen diario está listo para las {timeLocal}.</p>
+            </div>
+            {isAnalyzing && (
+              <div className="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-full text-xs font-black animate-pulse flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
+                ANALIZANDO PERFIL...
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Status Card */}
             <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-8">
@@ -57,6 +75,26 @@ export default async function Home() {
                 <p className="text-lg font-medium text-gray-900">{isEnabled ? 'Activo' : 'Pausado'}</p>
               </div>
             </div>
+
+            {/* Profile Card */}
+            <Link href="/profile">
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow h-full cursor-pointer group">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <svg className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Tu Inteligencia</p>
+                  <p className="text-lg font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">Ver Mi Perfil</p>
+                </div>
+              </div>
+            </Link>
 
             {/* Config Card */}
             <Link href="/config">
@@ -74,7 +112,7 @@ export default async function Home() {
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Configuración</p>
-                  <p className="text-lg font-medium text-gray-900 group-hover:text-adhoc-violet transition-colors">Editar Preferencias</p>
+                  <p className="text-lg font-medium text-gray-900 group-hover:text-gray-900 transition-colors">Preferencias</p>
                 </div>
               </div>
             </Link>

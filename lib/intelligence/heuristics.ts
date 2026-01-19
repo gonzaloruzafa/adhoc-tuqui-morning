@@ -24,10 +24,13 @@ export function scoreEmailImportance(
     let score = 0;
     const reasons: string[] = [];
 
-    // VIP sender (+50)
-    if (vipList.some((vip) => email.fromEmail.toLowerCase().includes(vip.toLowerCase()))) {
+    // VIP sender or domain (+50)
+    const isVIPEmail = vipList.some((vip) => email.fromEmail.toLowerCase() === vip.toLowerCase());
+    const isVIPDomain = vipList.some((vip) => !vip.includes('@') && email.fromEmail.toLowerCase().includes(vip.toLowerCase()));
+
+    if (isVIPEmail || isVIPDomain) {
         score += 50;
-        reasons.push("VIP sender");
+        reasons.push("VIP sender/domain");
     }
 
     // Unread (+10)

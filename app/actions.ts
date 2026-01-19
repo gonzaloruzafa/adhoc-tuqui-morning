@@ -9,6 +9,7 @@ const ConfigSchema = z.object({
     timeLocal: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:MM)"),
     timezone: z.string(),
     phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone format (E.164)").optional().or(z.literal("")),
+    enabled: z.boolean().default(true),
 });
 
 export async function saveConfiguration(formData: FormData) {
@@ -19,6 +20,7 @@ export async function saveConfiguration(formData: FormData) {
         timeLocal: formData.get("timeLocal"),
         timezone: formData.get("timezone"),
         phone: formData.get("phone"),
+        enabled: formData.get("enabled") === "on", // Handle checkbox
     };
 
     const validated = ConfigSchema.safeParse(rawData);
@@ -27,7 +29,7 @@ export async function saveConfiguration(formData: FormData) {
         return { error: "Invalid data", details: validated.error.flatten() };
     }
 
-    const { timeLocal, timezone, phone } = validated.data;
+    const { timeLocal, timezone, phone, enabled } = validated.data;
     const db = getClient();
 
     // Update User Preference (Phone, Timezone)
@@ -40,16 +42,18 @@ export async function saveConfiguration(formData: FormData) {
         .eq("email", session.user.email);
 
     // Update/Create Schedule
-    // Note: Using stored procedure or simple upsert logic if schedule ID unknown.
-    // Since we link by user_email in our schema:
+    const { calculateNextRunAt } = await import("@/lib/scheduler");
+    const nextRunAt = calculateNextRunAt(timeLocal, timezone, [1, 2, 3, 4, 5]);
 
     const { error } = await db
         .from("tuqui_morning_schedules")
         .upsert({
             user_email: session.user.email,
             time_local: timeLocal,
-            enabled: true,
-            days_of_week: [1, 2, 3, 4, 5], // Default M-F for now
+            enabled: enabled,
+            // Keep existing days or default to M-F
+            days_of_week: [1, 2, 3, 4, 5],
+            next_run_at: nextRunAt.toISOString(),
             updated_at: new Date().toISOString()
         }, { onConflict: 'user_email' });
 

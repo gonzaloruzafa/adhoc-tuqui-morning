@@ -82,16 +82,20 @@ export async function generateAudio(text: string, userId: string) {
     const bucketName = 'briefings';
 
     // Verify bucket exists, if not try to create it (Admin only)
-    const { data: buckets } = await db.storage.listBuckets();
-    if (!buckets?.find(b => b.name === bucketName)) {
-        console.log(`Creating missing bucket: ${bucketName}`);
-        const { error: createError } = await db.storage.createBucket(bucketName, {
-            public: false, // We use signed URLs for security
-        });
-        if (createError) {
-            console.error("Failed to create bucket:", createError);
-            throw new Error(`Storage bucket '${bucketName}' missing and could not be created.`);
+    try {
+        const { data: buckets, error: listError } = await db.storage.listBuckets();
+        if (listError) throw listError;
+
+        if (!buckets?.find(b => b.name === bucketName)) {
+            console.log(`[Storage] Creating missing bucket: ${bucketName}`);
+            const { error: createError } = await db.storage.createBucket(bucketName, {
+                public: true, // Making public to ensure Twilio can reach it more reliably
+            });
+            if (createError) throw createError;
         }
+    } catch (err: any) {
+        console.error("[Storage] Bucket check/creation failed:", err);
+        // Continue and try to upload anyway, maybe it exists but list failed
     }
 
     const filename = `${userId}/${Date.now()}.wav`;
@@ -104,7 +108,7 @@ export async function generateAudio(text: string, userId: string) {
         });
 
     if (uploadError) {
-        console.error("Storage upload failed:", uploadError);
+        console.error("[Storage] Upload failed:", uploadError);
         throw new Error(`Storage upload failed: ${uploadError.message}`);
     }
 

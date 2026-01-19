@@ -17,6 +17,7 @@ export interface UserProfile {
     vip_domains: string[];
     personality_hints: string | null;
     preferred_greeting: string | null;
+    persona_description?: string | null;
 }
 
 export interface VIPContact {
@@ -81,7 +82,8 @@ Respondé SOLO con JSON válido (sin markdown, sin explicaciones):
   ],
   "vip_domains": ["dominios importantes como empresa.com, cliente.com (ej: adhoc.com.ar)"],
   "personality_hints": "cómo prefiere comunicarse esta persona (1 frase)",
-  "preferred_greeting": "nombre corto o apodo inferido del tono de los emails"
+  "preferred_greeting": "nombre corto o apodo inferido del tono de los emails",
+  "persona_description": "una breve bio de 2-3 frases resumiendo quién es esta persona profesionalmente y su rol actual"
 }
 `;
 }
@@ -122,7 +124,11 @@ export async function runProfileAnalysis(userEmail: string): Promise<void> {
         const accessToken = await getValidAccessToken(userEmail);
 
         const { fetchRecentEmails } = await import("@/lib/google/gmail");
-        const emails = await fetchRecentEmails(accessToken, { maxResults: 300, hoursBack: 24 * 30 });
+        const thirtyDaysAgo = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
+        const emails = await fetchRecentEmails(accessToken, {
+            maxResults: 300,
+            q: `after:${thirtyDaysAgo}` // Broad search: archived, sent, inbox, etc.
+        });
 
         if (emails.length < 5) throw new Error("Not enough emails for analysis");
 

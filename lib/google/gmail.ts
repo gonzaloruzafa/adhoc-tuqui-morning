@@ -16,9 +16,9 @@ export interface EmailSummary {
 
 export async function fetchRecentEmails(
     accessToken: string,
-    options: { maxResults?: number; hoursBack?: number } = {}
+    options: { maxResults?: number; hoursBack?: number; q?: string } = {}
 ): Promise<EmailSummary[]> {
-    const { maxResults = 50, hoursBack = 24 } = options;
+    const { maxResults = 50, hoursBack = 24, q } = options;
     const auth = getAuthorizedClient(accessToken);
     const gmail = google.gmail({ version: "v1", auth });
 
@@ -27,10 +27,11 @@ export async function fetchRecentEmails(
     );
 
     try {
+        const query = q || `in:inbox after:${afterTimestamp}`;
         const response = await gmail.users.messages.list({
             userId: "me",
             maxResults,
-            q: `in:inbox after:${afterTimestamp}`,
+            q: query,
         });
 
         if (!response.data.messages) return [];

@@ -66,6 +66,42 @@ export async function saveConfiguration(formData: FormData) {
     return { success: true };
 }
 
+export async function retriggerProfileAnalysis() {
+    const session = await auth();
+    if (!session?.user?.email) throw new Error("Unauthorized");
+
+    const { runProfileAnalysis } = await import("@/lib/intelligence/profile-analyzer");
+
+    // Non-blocking trigger or await? 
+    // The user said "recalculate button", so we can do it asynchronously and return success
+    runProfileAnalysis(session.user.email).catch(console.error);
+
+    revalidatePath("/profile");
+    return { success: true, message: "Análisis iniciado..." };
+}
+
+export async function updateUserProfile(data: { persona_description: string }) {
+    const session = await auth();
+    if (!session?.user?.email) throw new Error("Unauthorized");
+
+    const db = getClient();
+    const { error } = await db
+        .from("tuqui_morning_user_profiles")
+        .update({
+            persona_description: data.persona_description,
+            updated_at: new Date().toISOString()
+        })
+        .eq("user_email", session.user.email);
+
+    if (error) {
+        console.error("Update profile error:", error);
+        return { error: "Failed to update profile" };
+    }
+
+    revalidatePath("/profile");
+    return { success: true };
+}
+
 export async function getUserConfig() {
     const session = await auth();
     if (!session?.user?.email) return null;

@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { getClient } from "@/lib/supabase/client";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { ProfileEditor } from "@/components/profile-editor";
 
 export default async function ProfilePage() {
     const session = await auth();
@@ -24,16 +25,19 @@ export default async function ProfilePage() {
         return (
             <div className="max-w-4xl mx-auto px-6 py-12">
                 <div className="bg-white rounded-3xl p-12 text-center shadow-sm border border-gray-100">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-4">Tu Perfil Inteligente</h1>
-                    <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-4 font-kansas">Tu Perfil Inteligente</h1>
+                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
                         {user?.profile_analysis_status === 'analyzing'
                             ? "Tuqui está analizando tu historial para conocerte mejor. Esto puede tardar un minuto..."
                             : "Todavía no terminamos de analizar tu perfil. Logueate de nuevo o esperá un momento."}
                     </p>
-                    <div className="flex justify-center gap-4">
-                        <Link href="/" className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-semibold hover:bg-indigo-700 transition">
+                    <div className="flex flex-col items-center gap-6">
+                        <Link href="/" className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-200">
                             Volver al Inicio
                         </Link>
+                        {user?.profile_analysis_status !== 'analyzing' && (
+                            <ProfileEditor initialBio={null} />
+                        )}
                     </div>
                 </div>
             </div>
@@ -44,7 +48,7 @@ export default async function ProfilePage() {
         <div className="max-w-4xl mx-auto px-6 py-12 animate-in fade-in duration-500">
             <div className="flex items-center justify-between mb-10">
                 <div>
-                    <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">
+                    <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2 font-kansas">
                         Tu Perfil <span className="text-indigo-600">Tuqui</span>
                     </h1>
                     <p className="text-gray-500 font-medium">Lo que la IA dedujo de tu historial de emails.</p>
@@ -54,88 +58,101 @@ export default async function ProfilePage() {
                 </Link>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-2">
-                {/* Sector Profesional */}
-                <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                    <h2 className="text-lg font-bold text-indigo-600 mb-6 flex items-center gap-2">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        Identidad Profesional
-                    </h2>
-                    <dl className="space-y-4">
-                        <div>
-                            <dt className="text-xs uppercase tracking-wider font-bold text-gray-400">Rol & Seniority</dt>
-                            <dd className="text-lg font-bold text-gray-900">{profile.inferred_role} ({profile.inferred_seniority})</dd>
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {/* Editable Bio & Recalculate */}
+                <div className="lg:col-span-2">
+                    <ProfileEditor initialBio={profile.persona_description} />
+                </div>
+
+                {/* Identity Sidebar */}
+                <div className="space-y-6">
+                    <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                        <h2 className="text-lg font-bold text-indigo-600 mb-6 flex items-center gap-2 tracking-tight">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            Identidad
+                        </h2>
+                        <dl className="space-y-6">
+                            <div>
+                                <dt className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Rol & Seniority</dt>
+                                <dd className="text-lg font-bold text-gray-900 tracking-tight">{profile.inferred_role} <span className="text-gray-300 mx-1">/</span> {profile.inferred_seniority}</dd>
+                            </div>
+                            <div>
+                                <dt className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Empresa / Industria</dt>
+                                <dd className="text-lg font-bold text-gray-900 tracking-tight">{profile.inferred_company} <br /> <span className="text-sm text-gray-400">{profile.inferred_industry}</span></dd>
+                            </div>
+                            <div>
+                                <dt className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Foco Semanal</dt>
+                                <dd className="text-md font-bold text-indigo-600 leading-tight">"{profile.current_focus}"</dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                        <h2 className="text-lg font-bold text-gray-900 mb-4 tracking-tight">KPIs de Análisis</h2>
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-500 font-medium">Emails analizados</span>
+                                <span className="text-sm font-black text-gray-900">{profile.emails_analyzed}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-500 font-medium">Nivel de Estrés</span>
+                                <span className="text-sm font-black text-indigo-600 capitalize">{profile.stress_level}</span>
+                            </div>
                         </div>
-                        <div>
-                            <dt className="text-xs uppercase tracking-wider font-bold text-gray-400">Empresa / Industria</dt>
-                            <dd className="text-lg font-bold text-gray-900">{profile.inferred_company} | {profile.inferred_industry}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase tracking-wider font-bold text-gray-400">Tono de Comunicación</dt>
-                            <dd className="text-lg font-bold text-gray-900 capitalize">{profile.inferred_tone}</dd>
-                        </div>
-                    </dl>
+                    </div>
                 </div>
 
                 {/* VIP Contacts */}
                 <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                    <h2 className="text-lg font-bold text-orange-600 mb-6 flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-orange-600 mb-6 flex items-center gap-2 tracking-tight">
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
-                        Contactos VIP Detector
+                        Contactos VIP
                     </h2>
                     <div className="space-y-3">
-                        {profile.vip_contacts?.map((contact: any, idx: number) => (
-                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                        {profile.vip_contacts?.slice(0, 5).map((contact: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
                                 <div>
-                                    <p className="text-sm font-bold text-gray-900">{contact.name}</p>
+                                    <p className="text-sm font-bold text-gray-900 tracking-tight">{contact.name}</p>
                                     <p className="text-[10px] text-gray-500 uppercase font-black">{contact.relationship}</p>
                                 </div>
-                                <span className="bg-orange-100 text-orange-600 text-[10px] px-2 py-1 rounded-full font-bold">
-                                    {contact.frequency} emails
+                                <span className="bg-orange-100 text-orange-600 text-[9px] px-2 py-1 rounded-lg font-black tracking-tighter">
+                                    {contact.frequency}
                                 </span>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Topics & Focus */}
-                <div className="md:col-span-2 bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                    <div className="grid md:grid-cols-2 gap-8">
-                        <div>
-                            <h2 className="text-lg font-bold text-indigo-600 mb-6 flex items-center gap-2">
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 11h.01M7 15h.01M13 7h.01M13 11h.01M13 15h.01M17 7h.01M17 11h.01M17 15h.01" />
-                                </svg>
-                                Temas Recurrentes
-                            </h2>
-                            <div className="flex flex-wrap gap-2">
-                                {profile.recurring_topics?.map((topic: string, idx: number) => (
-                                    <span key={idx} className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-xl text-sm font-bold border border-indigo-100">
-                                        {topic}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                        <div>
-                            <h2 className="text-lg font-bold text-gray-900 mb-4">Análisis de Estrés y Foco</h2>
-                            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
-                                <p className="text-sm text-gray-600 leading-relaxed">
-                                    Según tus emails, esta semana tu foco está en <span className="font-bold text-gray-900">"{profile.current_focus}"</span>.
-                                    Tu nivel de estrés percibido es <span className="font-bold text-indigo-600 capitalize">{profile.stress_level}</span>.
-                                </p>
-                            </div>
-                        </div>
+                {/* Topics */}
+                <div className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                    <h2 className="text-lg font-bold text-indigo-600 mb-6 flex items-center gap-2 tracking-tight">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 11h.01M7 15h.01M13 7h.01M13 11h.01M13 15h.01M17 7h.01M17 11h.01M17 15h.01" />
+                        </svg>
+                        Temas Recurrentes
+                    </h2>
+                    <div className="flex flex-wrap gap-2">
+                        {profile.recurring_topics?.map((topic: string, idx: number) => (
+                            <span key={idx} className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-xl text-sm font-bold border border-indigo-100">
+                                {topic}
+                            </span>
+                        ))}
                     </div>
                 </div>
             </div>
 
-            <p className="mt-10 text-center text-xs text-gray-400 font-medium">
-                Tuqui analizó {profile.emails_analyzed} emails el {new Date(profile.last_analysis_at).toLocaleDateString()}.
-            </p>
+            <div className="mt-12 text-center">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                    AI Analysis v2.5 <span className="mx-2">•</span> {new Date(profile.last_analysis_at).toLocaleDateString()}
+                </p>
+                <p className="mt-2 text-xs text-gray-300 font-medium">
+                    Toda la información es extraída de forma privada de tu historial de Gmail.
+                </p>
+            </div>
         </div>
     );
 }

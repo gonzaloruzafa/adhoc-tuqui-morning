@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { updateUserProfile, retriggerProfileAnalysis } from "@/app/actions";
+import { updateUserProfile, retriggerProfileAnalysis, cancelProfileAnalysis } from "@/app/actions";
 import { useRouter } from "next/navigation";
 
 interface ProfileEditorProps {
@@ -18,6 +18,7 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail }: ProfileE
     const [progress, setProgress] = useState({ count: 0, total: 0 });
     const [lastProgressAt, setLastProgressAt] = useState(Date.now());
     const [isStuck, setIsStuck] = useState(false);
+    const [isStopping, setIsStopping] = useState(false);
     const router = useRouter();
 
     // Polling for progress when recalculating
@@ -32,21 +33,21 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail }: ProfileE
                 const res = await fetch(`/api/internal/analyze-profile/status?email=${userEmail}`);
                 const data = await res.json();
 
-                if (data.count && data.total) {
-                    if (data.count > progress.count) {
+                if (data.count !== undefined && data.total !== undefined) {
+                    if (data.count > progress.count || (data.total > 0 && progress.total === 0)) {
                         setLastProgressAt(Date.now());
                         setIsStuck(false);
                     }
                     setProgress({ count: data.count, total: data.total });
                 }
 
-                if (data.status === 'completed' || data.status === 'failed') {
+                if (data.status === 'completed' || data.status === 'failed' || !data.status) {
                     setIsRecalculating(false);
                     router.refresh();
                 }
 
-                // If stuck for more than 45 seconds without progress change
-                if (Date.now() - lastProgressAt > 45000) {
+                // If stuck for more than 40 seconds without progress change or if it hasn't even started
+                if (Date.now() - lastProgressAt > 40000) {
                     setIsStuck(true);
                 }
             } catch (e) {
@@ -55,7 +56,7 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail }: ProfileE
         }, 3000);
 
         return () => clearInterval(interval);
-    }, [isRecalculating, userEmail, router, progress.count, lastProgressAt]);
+    }, [isRecalculating, userEmail, router, progress.count, progress.total, lastProgressAt]);
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -74,15 +75,30 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail }: ProfileE
     const handleRecalculate = async () => {
         setIsRecalculating(true);
         setIsStuck(false);
+        setIsStopping(false);
         setLastProgressAt(Date.now());
         try {
-            const result = await retriggerProfileAnalysis();
-            // alert(result.message);
+            await retriggerProfileAnalysis();
             router.refresh();
         } catch (error) {
             console.error(error);
             alert("Error al iniciar el recalculado");
             setIsRecalculating(false);
+        }
+    };
+
+    const handleStop = async () => {
+        setIsStopping(true);
+        try {
+            await cancelProfileAnalysis();
+            setIsRecalculating(false);
+            setIsStuck(false);
+            router.refresh();
+        } catch (error) {
+            console.error(error);
+            alert("Error al detener el análisis");
+        } finally {
+            setIsStopping(false);
         }
     };
 
@@ -120,7 +136,7 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail }: ProfileE
                 {!isEditing ? (
                     <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 min-h-[100px]">
                         <p className="text-sm text-gray-700 leading-relaxed italic">
-                            {bio || "Aún no hay una descripción generada. Hacé clic en 'Recalcular' para generarla automáticamente."}
+                            {bio || "Aún no hay una descripción generada. Hacé clic en 'Actualizar Perfil' para generarla automáticamente."}
                         </p>
                     </div>
                 ) : (
@@ -134,18 +150,30 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail }: ProfileE
             </div>
 
             <div className="flex flex-col items-center gap-4">
-                <button
-                    onClick={handleRecalculate}
-                    disabled={isRecalculating && !isStuck}
-                    className="group relative flex items-center gap-2 bg-adhoc-violet/10 text-adhoc-violet px-6 py-3 rounded-2xl font-bold hover:bg-adhoc-violet/20 transition-all active:scale-95 disabled:opacity-50"
-                >
-                    <svg className={`w-4 h-4 ${isRecalculating && !isStuck ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    {isStuck ? "Reiniciar (Parece trabado)" : isRecalculating ? "Analizando emails..." : "Recalcular con Inteligencia"}
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={handleRecalculate}
+                        disabled={isRecalculating && !isStuck}
+                        className="group relative flex items-center gap-2 bg-adhoc-violet/10 text-adhoc-violet px-6 py-3 rounded-2xl font-bold hover:bg-adhoc-violet/20 transition-all active:scale-95 disabled:opacity-50"
+                    >
+                        <svg className={`w-4 h-4 ${isRecalculating && !isStuck ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        {isStuck ? "Reiniciar (Parece trabado)" : isRecalculating ? "Analizando emails..." : "Actualizar Perfil"}
+                    </button>
 
-                {isRecalculating && progress.total > 0 && (
+                    {isRecalculating && (
+                        <button
+                            onClick={handleStop}
+                            disabled={isStopping}
+                            className="bg-gray-100 text-gray-500 px-4 py-3 rounded-2xl font-bold hover:bg-gray-200 transition-all text-xs uppercase tracking-widest disabled:opacity-50"
+                        >
+                            {isStopping ? "..." : "Detener"}
+                        </button>
+                    )}
+                </div>
+
+                {isRecalculating && progress.total >= 0 && (
                     <div className="w-full max-w-xs space-y-2">
                         <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-adhoc-violet/60">
                             <span>Progreso</span>
@@ -159,7 +187,7 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail }: ProfileE
                         </div>
                         {isStuck && (
                             <p className="text-[9px] text-adhoc-coral font-bold text-center animate-pulse uppercase">
-                                El análisis parece estar demorando más de lo habitual...
+                                El análisis está tomando más tiempo. Podés detenerlo y volver a intentarlo.
                             </p>
                         )}
                     </div>

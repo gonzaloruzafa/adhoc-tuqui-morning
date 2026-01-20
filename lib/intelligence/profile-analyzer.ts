@@ -48,8 +48,8 @@ export function generateProfileAnalysisPrompt(
         .map(([email, data]) => `${data.name} <${email}> (${data.count} emails)`)
         .join('\n');
 
-    const emailsSummary = emails.slice(0, 200).map(e =>
-        `De: ${e.from} <${e.fromEmail}> | Asunto: ${e.subject} | Fecha: ${e.date.toISOString().split('T')[0]}`
+    const emailsSummary = emails.slice(0, 50).map(e =>
+        `De: ${e.from} <${e.fromEmail}> | Asunto: ${e.subject} | Snippet: ${e.snippet} | Fecha: ${e.date.toISOString().split('T')[0]}`
     ).join('\n');
 
     return `
@@ -59,10 +59,10 @@ REGLAS CRÍTICAS:
 2. Si no encontrás evidencia para un campo, usá el valor null (tipo null de JSON), NUNCA la palabra "null" como texto.
 3. El seniority debe ser obligatoriamente uno de estos: "executive", "manager", "individual_contributor" o null.
 
-CONTACTOS MÁS FRECUENTES:
+CONTACTOS MÁS RECIENTES Y FRECUENTES:
 ${topSenders}
 
-EMAILS RECIENTES (últimos ${emails.length}):
+EMAILS RECIENTES (últimos ${emails.length}, con fragmentos de los primeros 50):
 ${emailsSummary}
 
 Respondé SOLO con JSON válido (sin markdown, sin explicaciones, sin bloques de código):
@@ -139,6 +139,14 @@ export async function runProfileAnalysis(userEmail: string): Promise<void> {
             q: "", // Use the fix in gmail.ts to get all mail
             onProgress: async (count, total) => {
                 console.log(`[ProfileAnalyzer] Progress: ${count}/${total}`);
+
+                // CRITICAL: Check if analysis was canceled in background
+                const { data: currentUser } = await db.from("tuqui_morning_users").select("profile_analysis_status").eq("email", userEmail).single();
+                if (currentUser?.profile_analysis_status !== 'analyzing') {
+                    console.log(`[ProfileAnalyzer] Analysis canceled for ${userEmail}. Stopping.`);
+                    throw new Error("Analysis canceled by user");
+                }
+
                 await db.from("tuqui_morning_users").update({
                     profile_analysis_count: count,
                     profile_analysis_total: total
@@ -172,7 +180,10 @@ export async function runProfileAnalysis(userEmail: string): Promise<void> {
         revalidatePath("/profile");
         revalidatePath("/");
 
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message === "Analysis canceled by user") {
+            return; // Exit silently
+        }
         console.error("[ProfileAnalyzer] Profile analysis failed:", error);
         await db.from("tuqui_morning_users").update({ profile_analysis_status: "failed" }).eq("email", userEmail);
         revalidatePath("/profile");

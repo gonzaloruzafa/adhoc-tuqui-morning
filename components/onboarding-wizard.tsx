@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { saveConfiguration } from "@/app/actions";
+import { saveConfiguration, cancelProfileAnalysis, retriggerProfileAnalysis } from "@/app/actions";
 import Image from "next/image";
 
 interface OnboardingWizardProps {
@@ -25,6 +25,7 @@ export function OnboardingWizard({
     const [time, setTime] = useState(initialTime);
     const [phone, setPhone] = useState(initialPhone);
     const [isSaving, setIsSaving] = useState(false);
+    const [isStopping, setIsStopping] = useState(false);
     const [isStuck, setIsStuck] = useState(false);
     const [lastProgressAt, setLastProgressAt] = useState(Date.now());
     const router = useRouter();
@@ -43,8 +44,8 @@ export function OnboardingWizard({
                 const statusRes = await fetch(`/api/internal/analyze-profile/status?email=${userEmail}`);
                 const data = await statusRes.json();
 
-                if (data.count && data.total) {
-                    if (data.count > progress.count) {
+                if (data.count !== undefined && data.total !== undefined) {
+                    if (data.count > progress.count || (data.total > 0 && progress.total === 0)) {
                         setLastProgressAt(Date.now());
                         setIsStuck(false);
                     }
@@ -56,8 +57,12 @@ export function OnboardingWizard({
                     setStep(2);
                 }
 
-                // If stuck for more than 60 seconds (onboarding might take longer initially)
-                if (Date.now() - lastProgressAt > 60000) {
+                if (data.status === 'failed' || !data.status) {
+                    setIsStuck(true);
+                }
+
+                // If stuck for more than 40 seconds
+                if (Date.now() - lastProgressAt > 40000) {
                     setIsStuck(true);
                 }
             } catch (e) {
@@ -66,19 +71,28 @@ export function OnboardingWizard({
         }, 3000);
 
         return () => clearInterval(interval);
-    }, [step, status, userEmail, progress.count, lastProgressAt]);
+    }, [step, status, userEmail, progress.count, progress.total, lastProgressAt]);
 
     const handleRestart = async () => {
         setIsStuck(false);
+        setIsStopping(false);
         setLastProgressAt(Date.now());
         try {
-            await fetch('/api/internal/analyze-profile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userEmail })
-            });
+            await retriggerProfileAnalysis();
         } catch (e) {
             console.error("Failed to restart analysis", e);
+        }
+    };
+
+    const handleStop = async () => {
+        setIsStopping(true);
+        try {
+            await cancelProfileAnalysis();
+            setIsStuck(true); // Show restart options
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsStopping(false);
         }
     };
 
@@ -150,15 +164,33 @@ export function OnboardingWizard({
                                     ></div>
                                 </div>
                                 {isStuck && (
-                                    <div className="mt-4 space-y-2">
+                                    <div className="mt-4 space-y-4">
                                         <p className="text-[10px] text-adhoc-coral font-bold animate-pulse uppercase">El análisis parece estar demorando más de lo normal...</p>
-                                        <button
-                                            onClick={handleRestart}
-                                            className="text-xs font-black text-adhoc-violet underline decoration-2 underline-offset-4"
-                                        >
-                                            REINTENTAR AHORA
-                                        </button>
+                                        <div className="flex justify-center gap-3">
+                                            <button
+                                                onClick={handleRestart}
+                                                className="bg-adhoc-violet text-white px-6 py-2.5 rounded-2xl font-bold text-xs shadow-lg shadow-adhoc-violet/20"
+                                            >
+                                                REINTENTAR
+                                            </button>
+                                            <button
+                                                onClick={handleStop}
+                                                disabled={isStopping}
+                                                className="bg-gray-100 text-gray-600 px-6 py-2.5 rounded-2xl font-bold text-xs"
+                                            >
+                                                {isStopping ? "..." : "DETENER"}
+                                            </button>
+                                        </div>
                                     </div>
+                                )}
+                                {!isStuck && (
+                                    <button
+                                        onClick={handleStop}
+                                        disabled={isStopping}
+                                        className="mt-6 text-[10px] font-black text-gray-400 hover:text-gray-500 uppercase tracking-widest"
+                                    >
+                                        {isStopping ? "Deteniendo..." : "Detener Análisis"}
+                                    </button>
                                 )}
                             </div>
                         ) : (

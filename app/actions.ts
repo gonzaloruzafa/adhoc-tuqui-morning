@@ -139,3 +139,19 @@ export async function getUserConfig() {
         enabled: schedule?.enabled ?? true
     };
 }
+
+export async function cancelProfileAnalysis() {
+    const session = await auth();
+    if (!session?.user?.email) throw new Error("Unauthorized");
+
+    const db = getClient();
+    await db.from("tuqui_morning_users").update({
+        profile_analysis_status: "failed", // We use failed to signal it's blocked/stopped
+        profile_analysis_count: 0,
+        profile_analysis_total: 0
+    }).eq("email", session.user.email);
+
+    revalidatePath("/profile");
+    revalidatePath("/");
+    return { success: true, message: "Análisis detenido." };
+}

@@ -218,11 +218,13 @@ OUTPUT REQUERIDO (JSON válido, sin markdown)
 }
 
 REGLAS CRÍTICAS:
-- Si no hay evidencia suficiente, usa null (el valor JSON, no el string "null")
+- Si no hay evidencia suficiente, usa null (el valor JSON null, NUNCA el string "null")
+- IMPORTANTE: null debe ser el literal JSON null, NO la palabra "null" entre comillas
 - Los vip_contacts deben tener máximo 15 personas, ordenados por importancia
 - El persona_description debe ser ESPECÍFICO, no genérico
 - El one_liner debe ser memorable y preciso
 - Si detectas que es fundador/CEO, el tono del persona_description debe reflejarlo
+- Arrays vacíos deben ser [] y no null
 
 Solo responde con el JSON, sin explicaciones ni markdown.
 `;
@@ -250,13 +252,22 @@ export async function analyzeUserProfile(
     try {
         const profile = JSON.parse(jsonText);
 
+        // Sanitizar strings "null" a null real
+        const sanitizeNull = (val: any) => (val === 'null' || val === null || val === undefined) ? null : val;
+
+        Object.keys(profile).forEach(key => {
+            if (typeof profile[key] === 'string' && profile[key] === 'null') {
+                profile[key] = null;
+            }
+        });
+
         // Validar campos requeridos
         if (!profile.persona_description || profile.persona_description === 'null') {
-            profile.persona_description = `${userName} trabaja en ${profile.inferred_company || 'una empresa'}. Basado en sus comunicaciones, parece enfocado en ${profile.current_focus || 'sus responsabilidades diarias'}.`;
+            profile.persona_description = `${userName} trabaja en ${sanitizeNull(profile.inferred_company) || 'una empresa'}. Basado en sus comunicaciones, parece enfocado en ${sanitizeNull(profile.current_focus) || 'sus responsabilidades diarias'}.`;
         }
 
         if (!profile.one_liner || profile.one_liner === 'null') {
-            profile.one_liner = `${profile.inferred_role || 'Profesional'} en ${profile.inferred_company || 'su empresa'}`;
+            profile.one_liner = `${sanitizeNull(profile.inferred_role) || 'Profesional'} en ${sanitizeNull(profile.inferred_company) || 'su empresa'}`;
         }
 
         return profile;

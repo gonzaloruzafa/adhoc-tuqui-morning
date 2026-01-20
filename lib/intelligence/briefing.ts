@@ -51,6 +51,7 @@ const CLOSING_PHRASES = {
         "Dato del día: tu cerebro procesa 70,000 pensamientos por día. Este audio te ahorra unos cuantos.",
         "Fun fact: hoy es un gran día para ser extraordinario.",
         "Dato curioso: el café tarda 20 minutos en hacer efecto, así que estamos a tiempo.",
+        "Sabías que: el día de hoy tiene las mismas 24hs que ayer, pero hoy vas a lograr más.",
     ],
 };
 
@@ -105,6 +106,7 @@ PERFIL DEL USUARIO (usalo para personalizar):
 - Foco actual: ${profile.current_focus || "No determinado"}
 - Tono preferido: ${profile.inferred_tone || "casual"}
 - Nombre a usar: ${profile.preferred_greeting || userName.split(" ")[0]}
+- Gustos e intereses personales: ${profile.personal_interests?.join(", ") || "No detectados"}
 ` : "";
 
     const closingPhrase = selectClosingPhrase(date, profile);
@@ -135,9 +137,10 @@ INSTRUCCIONES PARA EL SCRIPT DE AUDIO:
 2. AGENDA: Máximo 3-4 reuniones. Si es el primer briefing del día (o bienvenida), mencionalo.
 3. EMAILS: Resaltá si hay de VIPs o temas que le importan según su perfil.
 4. NOTICIAS: Incluí brevemente si hay algo interesante de las noticias relevantes.
-5. CIERRE: Usá el cierre sugerido o adaptalo.
-6. TONO: Español argentino (vos, che, etc.). Conversacional, rápido y cálido.
-7. FORMATO: Sin bullets. Texto plano para ser HABLADO. Máximo 150 palabras.
+5. CONTENIDO SORPRESA: Si detectaste gustos/intereses personales, agregá AL FINAL un dato, noticia breve o curiosidad relacionada con esos temas. Debe ser inesperado y entretenido, tipo "máquina de casino": no sabe qué le va a tocar, pero es algo interesante afín a sus gustos. Ejemplo: si le gusta el fútbol, un dato rápido sobre su equipo; si le interesa la tecnología, una novedad tech; si es runner, un tip de entrenamiento. Máximo 1-2 frases.
+6. CIERRE: Usá el cierre sugerido o adaptalo.
+7. TONO: Español argentino (vos, che, etc.). Conversacional, rápido y cálido. Hacelo sonar humano y cercano.
+8. FORMATO: Sin bullets. Texto plano para ser HABLADO. Máximo 180 palabras (incluido el contenido sorpresa).
 
 Generá el script ahora:
 `;

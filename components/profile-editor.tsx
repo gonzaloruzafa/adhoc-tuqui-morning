@@ -115,8 +115,8 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail, variant = 
                 </button>
 
                 {showModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                        <div className="bg-white rounded-[2.5rem] p-10 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-300">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300 overflow-y-auto">
+                        <div className="bg-white rounded-[2.5rem] p-10 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-300 my-8">
                             <div className="flex justify-between items-center mb-8">
                                 <h3 className="text-2xl font-black text-gray-900 tracking-tight">Gestión de Perfil</h3>
                                 <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-900 transition-colors">

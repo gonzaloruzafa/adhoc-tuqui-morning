@@ -98,12 +98,12 @@ export default async function ProfilePage() {
                         <span className="text-[10px] font-black text-adhoc-violet uppercase tracking-[0.2em]">Tu Perfil Inteligente v3.0</span>
                     </div>
                     <h1 className="text-5xl lg:text-6xl font-black text-gray-900 tracking-tight mb-6 leading-[0.95] max-w-4xl font-display">
-                        {profile.one_liner || `${profile.inferred_role || 'Profesional'} en ${profile.inferred_company || 'tu empresa'}`}
+                        {profile.one_liner && profile.one_liner !== 'null' ? profile.one_liner : `${(profile.inferred_role && profile.inferred_role !== 'null') ? profile.inferred_role : 'Profesional'} en ${(profile.inferred_company && profile.inferred_company !== 'null') ? profile.inferred_company : 'tu empresa'}`}
                     </h1>
                     <div className="bg-white rounded-[2.5rem] p-8 lg:p-12 shadow-2xl shadow-gray-200/50 border border-gray-100 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-adhoc-violet/5 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-adhoc-violet/10 transition-all duration-1000" />
                         <p className="text-2xl text-gray-600 leading-relaxed font-medium relative z-10 italic">
-                            "{profile.persona_description || 'Aún estamos aprendiendo sobre vos...'}"
+                            "{profile.persona_description && profile.persona_description !== 'null' ? profile.persona_description : 'Aún estamos aprendiendo sobre vos...'}"
                         </p>
                     </div>
                 </div>
@@ -122,7 +122,7 @@ export default async function ProfilePage() {
                                 <div className="group/item">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 group-hover/item:text-adhoc-violet transition-colors">Rol Actual</p>
                                     <p className="text-xl font-black text-gray-900 leading-tight">
-                                        {profile.inferred_role || "No detectado"}
+                                        {(profile.inferred_role === 'null' || !profile.inferred_role) ? "No detectado" : profile.inferred_role}
                                         {profile.is_founder && (
                                             <span className="ml-2 inline-flex items-center px-3 py-0.5 rounded-full text-[9px] font-black bg-adhoc-coral/10 text-adhoc-coral border border-adhoc-coral/20 uppercase tracking-widest">
                                                 Founder
@@ -133,18 +133,18 @@ export default async function ProfilePage() {
 
                                 <div className="group/item">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 group-hover/item:text-adhoc-violet transition-colors">Empresa & Sector</p>
-                                    <p className="text-xl font-black text-gray-900 leading-tight">{profile.inferred_company || "—"}</p>
-                                    <p className="text-sm text-gray-400 font-bold uppercase tracking-wider mt-1">{profile.inferred_industry || ""}</p>
+                                    <p className="text-xl font-black text-gray-900 leading-tight">{(profile.inferred_company === 'null' || !profile.inferred_company) ? "—" : profile.inferred_company}</p>
+                                    <p className="text-sm text-gray-400 font-bold uppercase tracking-wider mt-1">{(profile.inferred_industry === 'null' || !profile.inferred_industry) ? "" : profile.inferred_industry}</p>
                                 </div>
 
                                 <div className="group/item">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 group-hover/item:text-adhoc-violet transition-colors">Nivel de Seniority</p>
                                     <p className="text-xl font-black text-gray-900 leading-tight capitalize">
-                                        {profile.inferred_seniority?.replace(/_/g, ' ') || "Sin clasificar"}
+                                        {(profile.inferred_seniority && profile.inferred_seniority !== 'null') ? profile.inferred_seniority.replace(/_/g, ' ') : "Sin clasificar"}
                                     </p>
                                 </div>
 
-                                {profile.team_size_hint && (
+                                {profile.team_size_hint && profile.team_size_hint !== 'null' && (
                                     <div className="group/item bg-gray-50 rounded-2xl p-4 border border-gray-100">
                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Impacto de Liderazgo</p>
                                         <p className="text-xl font-black text-gray-900 leading-tight">
@@ -159,13 +159,13 @@ export default async function ProfilePage() {
                         <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-500 border-l-4 border-l-adhoc-violet">
                             <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">Estilo de Comunicación</h2>
                             <p className="text-lg font-bold text-gray-800 leading-relaxed mb-6">
-                                {profile.communication_style || profile.personality_hints || "Información pendiente de análisis"}
+                                {(profile.communication_style && profile.communication_style !== 'null') ? profile.communication_style : (profile.personality_hints && profile.personality_hints !== 'null' ? profile.personality_hints : "Información pendiente de análisis")}
                             </p>
                             <div className="flex flex-wrap gap-2">
                                 <span className="text-[10px] font-black bg-gray-100 text-gray-600 px-3 py-1.5 rounded-xl uppercase tracking-widest capitalize">
-                                    Tono: {profile.inferred_tone || "Mixto"}
+                                    Tono: {(profile.inferred_tone && profile.inferred_tone !== 'null') ? profile.inferred_tone : "Mixto"}
                                 </span>
-                                {profile.preferred_greeting && (
+                                {profile.preferred_greeting && profile.preferred_greeting !== 'null' && (
                                     <span className="text-[10px] font-black bg-adhoc-violet/10 text-adhoc-violet px-3 py-1.5 rounded-xl uppercase tracking-widest">
                                         Llamar: {profile.preferred_greeting}
                                     </span>
@@ -183,7 +183,7 @@ export default async function ProfilePage() {
                                 <h2 className="text-[10px] font-black text-white/70 uppercase tracking-[0.2em]">Prioridad Actual</h2>
                             </div>
                             <p className="text-3xl font-black leading-[1.1] tracking-tight">
-                                {profile.current_focus || "Mantenimiento operativo"}
+                                {(profile.current_focus && profile.current_focus !== 'null') ? profile.current_focus : "Mantenimiento operativo"}
                             </p>
                         </div>
 

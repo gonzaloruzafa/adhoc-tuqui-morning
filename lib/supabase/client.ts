@@ -1,12 +1,17 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 let serverClient: SupabaseClient | null = null
+let browserClient: SupabaseClient | null = null
 
 /**
- * Get the Supabase client (singleton)
- * Uses service role key for server-side operations (Admin access)
+ * Get the Supabase Admin client (singleton)
+ * ONLY FOR SERVER-SIDE USE. Uses service role key.
  */
-export function getClient(): SupabaseClient {
+export function getAdminClient(): SupabaseClient {
+    if (typeof window !== 'undefined') {
+        throw new Error('getAdminClient cannot be called from the browser. Use getAnonClient instead.')
+    }
+
     if (serverClient) {
         return serverClient
     }
@@ -16,7 +21,7 @@ export function getClient(): SupabaseClient {
 
     if (!url || !serviceKey) {
         throw new Error(
-            'Missing Supabase environment variables. ' +
+            'Missing Supabase Admin environment variables. ' +
             'Required: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY'
         )
     }
@@ -32,12 +37,40 @@ export function getClient(): SupabaseClient {
 }
 
 /**
- * Check if user is admin (Simple email check for now, or DB lookup)
+ * Get the Supabase Anon client (singleton)
+ * Safe for both client and server side.
+ */
+export function getAnonClient(): SupabaseClient {
+    if (browserClient) {
+        return browserClient
+    }
+
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!url || !anonKey) {
+        throw new Error(
+            'Missing Supabase Anon environment variables. ' +
+            'Required: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY'
+        )
+    }
+
+    browserClient = createClient(url, anonKey)
+
+    return browserClient
+}
+
+/**
+ * Backward compatibility: Alias for getAdminClient (Threw on client)
+ */
+export function getClient(): SupabaseClient {
+    return getAdminClient()
+}
+
+/**
+ * Check if user is admin
  */
 export async function isUserAdmin(email: string): Promise<boolean> {
     const db = getClient()
-
-    // Check if user exists in a specific admin table or column
-    // For MVP, maybe just check if email is the owner's
-    return email === 'gonzalo@adhoc.com.ar' // Example, replace with real logic
+    return email === 'gonzalo@adhoc.com.ar'
 }

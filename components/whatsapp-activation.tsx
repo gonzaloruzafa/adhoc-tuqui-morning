@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getClient } from "@/lib/supabase/client";
+import { getAnonClient } from "@/lib/supabase/client";
 
 interface WhatsAppActivationProps {
     userEmail: string;
@@ -14,7 +14,7 @@ export function WhatsAppActivation({ userEmail }: WhatsAppActivationProps) {
 
     useEffect(() => {
         const fetchStatus = async () => {
-            const db = getClient();
+            const db = getAnonClient();
             const { data } = await db
                 .from("tuqui_morning_users")
                 .select("whatsapp_status, whatsapp_window_expires_at")
@@ -31,7 +31,7 @@ export function WhatsAppActivation({ userEmail }: WhatsAppActivationProps) {
         fetchStatus();
 
         // Subscription para cambios en tiempo real
-        const db = getClient();
+        const db = getAnonClient();
         const channel = db.channel(`user-whatsapp-${userEmail}`)
             .on('postgres_changes', {
                 event: 'UPDATE',

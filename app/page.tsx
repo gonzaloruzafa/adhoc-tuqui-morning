@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getUserConfig } from "@/app/actions";
 import { getClient } from "@/lib/supabase/client";
 import Image from "next/image"
+import { WhatsAppActivation } from "@/components/whatsapp-activation";
 
 export default async function Home() {
   const session = await auth()
@@ -121,6 +122,10 @@ export default async function Home() {
                 </div>
               </div>
             </Link>
+          </div>
+
+          <div className="mt-8">
+            <WhatsAppActivation userEmail={session.user.email!} />
           </div>
         </main>
       </div>

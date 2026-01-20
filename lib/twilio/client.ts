@@ -6,63 +6,94 @@ const client = twilio(
     process.env.TWILIO_AUTH_TOKEN!
 );
 
+/**
+ * Verifica si el usuario tiene una ventana de servicio de 24hs abierta
+ */
+export async function canSendToUser(userEmail: string): Promise<boolean> {
+    const db = getClient();
+    const { data } = await db
+        .from("tuqui_morning_users")
+        .select("whatsapp_status, whatsapp_window_expires_at")
+        .eq("email", userEmail)
+        .single();
+
+    if (!data) return false;
+    if (data.whatsapp_status !== 'active') return false;
+    if (!data.whatsapp_window_expires_at) return false;
+
+    const expiresAt = new Date(data.whatsapp_window_expires_at);
+    return expiresAt > new Date();
+}
+
 export async function sendWhatsAppAudio(
     to: string,
     audioUrl: string | null,
     fallbackText: string,
     userEmail: string
 ) {
-    // Ensure "to" has whatsapp prefix
+    // 1. Verificar ventana si no es el primer mensaje de onboarding
+    const isWindowOpen = await canSendToUser(userEmail);
+    if (!isWindowOpen) {
+        console.log(`[Twilio] Window closed for ${userEmail}. Aborting WhatsApp delivery.`);
+        return { success: false, error: "window_closed" };
+    }
+
     const toNumber = to.startsWith("whatsapp:") ? to : `whatsapp:${to}`;
     const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER?.startsWith("whatsapp:")
         ? process.env.TWILIO_WHATSAPP_NUMBER
         : `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`;
 
     if (!process.env.TWILIO_WHATSAPP_NUMBER) {
-        console.error("Missing Twilio configuration");
         throw new Error("Missing Twilio configuration");
     }
 
     try {
         let messageSid;
 
+        // El CTA es crucial para mantener la ventana abierta mañana
+        const CTA = "\n\n¿Mañana igual? Respondé 'Si' para confirmar.";
+
         if (audioUrl) {
-            const message = await client.messages.create({
+            // Primero enviamos el audio
+            const audioMsg = await client.messages.create({
                 from: fromNumber,
                 to: toNumber,
                 mediaUrl: [audioUrl],
             });
-            messageSid = message.sid;
+
+            // Inmediatamente el texto con el CTA
+            await client.messages.create({
+                from: fromNumber,
+                to: toNumber,
+                body: `🌅 Aquí tenés tu Tuqui de hoy.${CTA}`,
+            });
+
+            messageSid = audioMsg.sid;
         } else {
-            // Fallback to text
+            // Solo texto
             const message = await client.messages.create({
                 from: fromNumber,
                 to: toNumber,
-                body: `🌅 Tu briefing:\n\n${fallbackText}`,
+                body: `🌅 Tu briefing:\n\n${fallbackText}${CTA}`,
             });
             messageSid = message.sid;
         }
+
+        // Log interaction in DB
+        const db = getClient();
+        await db.from("tuqui_morning_whatsapp_messages").insert({
+            user_email: userEmail,
+            direction: 'outbound',
+            message_type: audioUrl ? 'audio' : 'text',
+            content: audioUrl || fallbackText,
+            twilio_message_sid: messageSid,
+            triggered_by: 'daily_briefing'
+        });
 
         return { success: true, messageSid };
 
     } catch (error: any) {
         console.error("WhatsApp delivery failed:", error);
-
-        // Attempt fallback text if audio failed
-        if (audioUrl) {
-            console.log("Attempting text fallback...");
-            try {
-                const message = await client.messages.create({
-                    from: fromNumber,
-                    to: toNumber,
-                    body: `🌅 Tu briefing (Audio falló):\n\n${fallbackText}`,
-                });
-                return { success: true, messageSid: message.sid, isFallback: true };
-            } catch (textError) {
-                return { success: false, error: error.message };
-            }
-        }
-
         return { success: false, error: error.message };
     }
 }

@@ -105,9 +105,27 @@ export async function processRun(runId: string) {
         });
 
         // 8. Delivery
+        let delivered = false;
         if (user.phone_whatsapp) {
-            await sendWhatsAppAudio(user.phone_whatsapp, audioUrl, script, user.email);
-            await db.from("tuqui_morning_outputs").update({ delivery_status: "delivered" }).eq("run_id", runId); // Simplified status update
+            const result = await sendWhatsAppAudio(user.phone_whatsapp, audioUrl, script, user.email);
+            if (result.success) {
+                delivered = true;
+                await db.from("tuqui_morning_outputs").update({ delivery_status: "delivered_whatsapp" }).eq("run_id", runId);
+            } else if (result.error === "window_closed") {
+                console.log(`[Pipeline] WhatsApp window closed for ${user.email}. Falling back to Email.`);
+            }
+        }
+
+        if (!delivered) {
+            console.log(`[Pipeline] Sending briefing via Email to ${user.email}`);
+            const { sendEmail } = await import("@/lib/google/gmail");
+            try {
+                await sendEmail(accessToken, user.email, `Tuqui Morning: Briefing de hoy`, script);
+                await db.from("tuqui_morning_outputs").update({ delivery_status: "delivered_email" }).eq("run_id", runId);
+            } catch (emailError) {
+                console.error("Pipeline: Email fallback failed", emailError);
+                await db.from("tuqui_morning_outputs").update({ delivery_status: "failed" }).eq("run_id", runId);
+            }
         }
 
         // 9. Complete

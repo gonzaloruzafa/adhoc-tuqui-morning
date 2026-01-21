@@ -51,24 +51,41 @@ export async function sendWhatsAppAudio(
         let messageSid;
 
         // El CTA es crucial para mantener la ventana abierta mañana
+        // TODO: Para producción, implementar botones interactivos usando Content Templates de Twilio
+        // Ver: https://www.twilio.com/docs/whatsapp/buttons
+        // Los botones requieren crear un Content Template con type "twilio/quick-reply"
         const CTA = "\n\n¿Mañana igual? Respondé 'Si' para confirmar.";
 
         if (audioUrl) {
+            console.log(`[Twilio] Sending audio message. URL: ${audioUrl}`);
+            console.log(`[Twilio] From: ${fromNumber}, To: ${toNumber}`);
+
             // Primero enviamos el audio
-            const audioMsg = await client.messages.create({
-                from: fromNumber,
-                to: toNumber,
-                mediaUrl: [audioUrl],
-            });
+            try {
+                const audioMsg = await client.messages.create({
+                    from: fromNumber,
+                    to: toNumber,
+                    mediaUrl: [audioUrl],
+                });
+                console.log(`[Twilio] Audio message sent successfully. SID: ${audioMsg.sid}, Status: ${audioMsg.status}`);
+                messageSid = audioMsg.sid;
+            } catch (audioError: any) {
+                console.error(`[Twilio] Audio message FAILED:`, audioError);
+                console.error(`[Twilio] Error details:`, {
+                    code: audioError.code,
+                    message: audioError.message,
+                    moreInfo: audioError.moreInfo
+                });
+                throw audioError; // Re-throw to see full error
+            }
 
             // Inmediatamente el texto con el CTA
-            await client.messages.create({
+            const textMsg = await client.messages.create({
                 from: fromNumber,
                 to: toNumber,
                 body: `🌅 Aquí tenés tu Tuqui de hoy.${CTA}`,
             });
-
-            messageSid = audioMsg.sid;
+            console.log(`[Twilio] Text message sent. SID: ${textMsg.sid}`);
         } else {
             // Solo texto
             const message = await client.messages.create({

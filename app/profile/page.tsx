@@ -18,7 +18,7 @@ export default async function ProfilePage() {
 
     const { data: user } = await db
         .from("tuqui_morning_users")
-        .select("profile_analysis_status")
+        .select("profile_analysis_status, image")
         .eq("email", session.user.email)
         .single();
 
@@ -58,7 +58,8 @@ export default async function ProfilePage() {
         );
     }
 
-    const confidence = profile.confidence_score || 0;
+    // Parse confidence score correctly (could be null, 0, or a number)
+    const confidence = profile.confidence_score != null ? Math.round(profile.confidence_score) : 0;
     const confidenceColor = confidence >= 70 ? 'text-green-600 bg-green-50' : confidence >= 40 ? 'text-yellow-600 bg-yellow-50' : 'text-red-500 bg-red-50';
 
     return (
@@ -77,9 +78,9 @@ export default async function ProfilePage() {
                     </div>
 
                     <div className="flex items-center gap-6">
-                        {session.user.image && (
+                        {(user?.image || session.user.image) && (
                             <div className="relative w-24 h-24 rounded-[32px] overflow-hidden shadow-2xl shadow-[#7C6CD8]/10 ring-4 ring-white">
-                                <NextImage src={session.user.image} alt="Profile" fill className="object-cover" />
+                                <NextImage src={user?.image || session.user.image!} alt="Profile" fill className="object-cover" />
                             </div>
                         )}
                         <div className="space-y-1">

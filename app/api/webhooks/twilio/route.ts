@@ -20,6 +20,7 @@ export async function POST(req: Request) {
         const body = formData.get("Body") as string;
         const messageSid = formData.get("MessageSid") as string;
         const direction = formData.get("Direction") as string;
+        const buttonPayload = formData.get("ButtonPayload") as string; // For button responses
 
         if (!from) {
             console.error("[Twilio Webhook] Missing From number");
@@ -87,9 +88,10 @@ export async function POST(req: Request) {
 
         // 4. Lógica de respuesta automática (TwiML)
         let responseText = "";
-        const lowerBody = body.toLowerCase().trim();
+        const lowerBody = body?.toLowerCase().trim() || "";
 
-        if (lowerBody === "si" || lowerBody === "sí") {
+        // Check if it's a button response
+        if (buttonPayload === "confirm_yes" || lowerBody === "si" || lowerBody === "sí") {
             responseText = `¡Confirmado ${user.name}! Mañana te mando tu Tuqui a la hora de siempre. ☀️`;
         } else if (lowerBody.includes("hola") || lowerBody.includes("despertate")) {
             responseText = `¡Hola! Tuqui está despierto. A partir de ahora vas a recibir tus briefings diarios por acá.`;

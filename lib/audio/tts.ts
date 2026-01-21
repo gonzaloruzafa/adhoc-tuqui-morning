@@ -112,17 +112,19 @@ export async function generateAudio(text: string, userId: string) {
         throw new Error(`Storage upload failed: ${uploadError.message}`);
     }
 
-    // 3. Get Signed URL
-    const { data: signData, error: signError } = await db.storage
+    // 3. Get Public URL (better for Twilio than signed URLs)
+    const { data: publicUrlData } = db.storage
         .from('briefings')
-        .createSignedUrl(filename, 24 * 60 * 60);
+        .getPublicUrl(filename);
 
-    if (signError || !signData) {
-        throw new Error("Failed to sign URL");
+    if (!publicUrlData?.publicUrl) {
+        throw new Error("Failed to get public URL");
     }
+
+    console.log(`[TTS] Audio generated successfully. Public URL: ${publicUrlData.publicUrl}`);
 
     const wordCount = text.split(/\s+/).length;
     const durationSeconds = Math.ceil((wordCount / 130) * 60);
 
-    return { url: signData.signedUrl, durationSeconds };
+    return { url: publicUrlData.publicUrl, durationSeconds };
 }

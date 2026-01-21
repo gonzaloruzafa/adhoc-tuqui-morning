@@ -74,22 +74,22 @@ export async function retriggerProfileAnalysis() {
     if (!session?.user?.email) throw new Error("Unauthorized");
 
     const db = getClient();
-    // Mark as analyzing synchronously so the revalidation picks it up
-    await db.from("tuqui_morning_users").update({ profile_analysis_status: "analyzing" }).eq("email", session.user.email);
-
-    // Run the rest in background using after()
-    after(async () => {
-        try {
-            await runProfileAnalysis(session!.user!.email!);
-            console.log(`✅ Profile analysis (retrigger) completed for ${session!.user!.email!}`);
-        } catch (e) {
-            console.error(`❌ Profile analysis (retrigger) failed for ${session!.user!.email!}:`, e);
-        }
-    });
+    
+    // APPROACH REFACTOR:
+    // 1. Mark as analyzing synchronously
+    // 2. The client will call the /api/internal/analyze-profile endpoint to trigger the heavy work
+    // 3. This avoids the Server Action timeout limits
+    
+    await db.from("tuqui_morning_users").update({ 
+        profile_analysis_status: "analyzing",
+        profile_analysis_count: 0,
+        profile_analysis_total: 0
+    }).eq("email", session.user.email);
 
     revalidatePath("/profile");
     revalidatePath("/");
-    return { success: true, message: "Análisis iniciado en segundo plano... se actualizará pronto." };
+    
+    return { success: true };
 }
 
 export async function updateUserProfile(data: { persona_description: string }) {

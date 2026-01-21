@@ -79,21 +79,22 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail, variant = 
         setIsStuck(false);
         setIsStopping(false);
         setLastProgressAt(Date.now());
+        setProgress({ count: 0, total: 0 });
+        
         try {
-            const res = await fetch('/api/internal/trigger-pipeline', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: userEmail, onlyAnalysis: true })
-            });
-
-            if (!res.ok) throw new Error("Trigger failed");
-
-            // Mark as analyzing locally to start polling
-            setIsRecalculating(true);
+            // Step 1: Mark status in DB via Action
+            await retriggerProfileAnalysis();
             router.refresh();
+
+            // Step 2: Trigger the actual heavy analysis via API (FIRE AND FORGET)
+            fetch('/api/internal/analyze-profile', {
+                method: 'POST',
+                body: JSON.stringify({ userEmail }),
+            }).catch(err => console.error("API Trigger failed", err));
+
         } catch (error) {
             console.error(error);
-            alert("Error al iniciar el recalculado. Probá de nuevo.");
+            alert("Error al iniciar el recalculado");
             setIsRecalculating(false);
         }
     };
@@ -170,7 +171,7 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail, variant = 
                                             <svg className={`w-4 h-4 ${isRecalculating && !isStuck ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                             </svg>
-                                            {isStuck ? "Reiniciar" : isRecalculating ? "Analizando..." : "Recalcular con IA"}
+                                            {isStuck ? "Reintentar" : isRecalculating ? "Analizando..." : "Recalcular con IA"}
                                         </button>
 
                                         {isRecalculating && (
@@ -184,7 +185,7 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail, variant = 
                                         )}
                                     </div>
                                     <p className="text-[9px] text-gray-400 text-center font-bold uppercase tracking-widest leading-relaxed">
-                                        Analizaremos tus últimos 500 emails para refinar tu perfil profesional v3.0
+                                        Analizaremos tus últimos 300 emails para refinar tu perfil profesional v3.0
                                     </p>
                                 </div>
                             </div>
@@ -252,7 +253,7 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail, variant = 
                         <svg className={`w-4 h-4 ${isRecalculating && !isStuck ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
-                        {isStuck ? "Reiniciar Análisis" : isRecalculating ? "Analizando emails..." : "Actualizar con Inteligencia"}
+                        {isStuck ? "Reintentar Análisis" : isRecalculating ? "Analizando emails..." : "Actualizar con Inteligencia"}
                     </button>
 
                     {isRecalculating && (
@@ -282,7 +283,7 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail, variant = 
                 )}
             </div>
             <p className="text-[9px] text-gray-400 text-center font-bold uppercase tracking-widest leading-relaxed">
-                Analizaremos tus últimos 500 emails para refinar tu perfil profesional v3.0
+                Analizaremos tus últimos 300 emails para refinar tu perfil profesional v3.0
             </p>
         </div>
     );

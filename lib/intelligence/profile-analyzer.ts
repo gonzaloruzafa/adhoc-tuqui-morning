@@ -302,7 +302,7 @@ export async function runProfileAnalysis(userEmail: string): Promise<void> {
         console.log(`[ProfileAnalyzer] Fetching emails with ENHANCED method...`);
 
         const emails = await fetchEmailsForProfile(accessToken, {
-            maxResults: 500,    // MÁS EMAILS
+            maxResults: 300,    // REDUCIDO para velocidad y estabilidad
             daysBack: 60,       // 2 MESES
             onProgress: async (count, total) => {
                 console.log(`[ProfileAnalyzer] Progress: ${count}/${total}`);

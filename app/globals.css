@@ -1,13 +1,38 @@
 @import "tailwindcss";
 
+/* Brand Fonts */
+@font-face {
+  font-family: 'New Kansas';
+  src: url('/fonts/fonnts.com-New-Kansas-.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Apercu Pro';
+  src: url('/fonts/apercu_regular_pro.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Apercu Pro';
+  src: url('/fonts/apercu_bold_pro.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --color-adhoc-violet: #7C6CD8;
   --color-adhoc-lavender: #BCAFEF;
   --color-adhoc-coral: #FF7348;
   --color-adhoc-mustard: #FEA912;
 
-  --font-sans: var(--font-apercu), system-ui, sans-serif;
-  --font-display: var(--font-new-kansas), Georgia, serif;
+  --font-sans: "Apercu Pro", var(--font-inter), system-ui, sans-serif;
+  --font-display: "New Kansas", Georgia, serif;
 }
 
 /* Custom Scrollbar */

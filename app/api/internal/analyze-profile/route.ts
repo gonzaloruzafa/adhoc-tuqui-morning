@@ -1,6 +1,10 @@
-import { NextResponse, after } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { runProfileAnalysis } from "@/lib/intelligence/profile-analyzer";
+import { after } from "next/server";
+
+export const maxDuration = 300; 
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
     const session = await auth();
@@ -12,30 +16,20 @@ export async function POST(request: Request) {
         return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    try {
-        // Run analysis asynchronously using after() to ensure it survives the response delivery
-        after(async () => {
-            console.log(`🚀 Starting background profile analysis for ${userEmail}`);
-            try {
-                await runProfileAnalysis(userEmail);
-                console.log(`✅ Profile analysis completed for ${userEmail}`);
-            } catch (e) {
-                console.error(`❌ Profile analysis failed for ${userEmail}:`, e);
-            }
-        });
+    console.log(`🚀 Scheduling profile analysis for ${userEmail}`);
+    
+    // We return immediately and run the work in the background via after()
+    // This avoids the client-side timeout and Vercel's response timeout
+    after(async () => {
+        try {
+            await runProfileAnalysis(userEmail);
+            console.log(`✅ Background profile analysis completed for ${userEmail}`);
+        } catch (e: any) {
+            console.error(`❌ Background profile analysis failed for ${userEmail}:`, e);
+        }
+    });
 
-        return NextResponse.json({
-            success: true,
-            message: "Profile analysis started in background"
-        });
-
-    } catch (error) {
-        console.error("Failed to start profile analysis:", error);
-        return NextResponse.json(
-            { error: "Failed to start analysis" },
-            { status: 500 }
-        );
-    }
+    return NextResponse.json({ success: true, message: "Analysis started in background" });
 }
 
 export async function GET() {

@@ -63,8 +63,8 @@ export async function fetchRecentEmails(
         const total = messageIds.length;
         const results: EmailSummary[] = [];
 
-        // Fetch details in chunks to avoid timeouts and allow progress reporting
-        const chunkSize = 15;
+        // Fetch details in parallel with larger concurrency
+        const chunkSize = 25;
         for (let i = 0; i < messageIds.length; i += chunkSize) {
             const chunk = messageIds.slice(i, i + chunkSize);
             console.log(`[Gmail] Fetching chunk ${i / chunkSize + 1} (${chunk.length} messages)`);
@@ -160,9 +160,10 @@ export async function fetchEmailsForProfile(
         const total = messageIds.length;
         const results: EmailForProfile[] = [];
 
-        const chunkSize = 20;
+        const chunkSize = 40;
         for (let i = 0; i < messageIds.length; i += chunkSize) {
             const chunk = messageIds.slice(i, i + chunkSize);
+            console.log(`[Gmail Profile] Fetching chunk ${i / chunkSize + 1} (${chunk.length} messages)`);
 
             const chunkDetails = await Promise.all(
                 chunk.map(async (msg) => {
@@ -170,7 +171,7 @@ export async function fetchEmailsForProfile(
                         const detail = await gmail.users.messages.get({
                             userId: "me",
                             id: msg.id!,
-                            format: "full",  // CAMBIO: full en vez de metadata para el body
+                            format: "full",
                         });
 
                         const headers = detail.data.payload?.headers || [];

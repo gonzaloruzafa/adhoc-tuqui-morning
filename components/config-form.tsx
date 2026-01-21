@@ -186,6 +186,25 @@ export function ConfigForm({ initialData }: ConfigFormProps) {
                 {/* Audio Preview */}
                 <PreviewControl />
 
+                {/* Debug User Status */}
+                <button
+                    type="button"
+                    onClick={async () => {
+                        const res = await fetch('/api/internal/debug-user');
+                        const data = await res.json();
+                        console.log("🔍 Debug Info:", data);
+
+                        const status = data.diagnosis?.canReceiveMessages
+                            ? `✅ WhatsApp Activo (expira en ${data.window.timeUntilExpiry})`
+                            : `❌ WhatsApp Inactivo - ${data.diagnosis?.phoneConfigured ? 'Ventana cerrada' : 'Teléfono no configurado'}`;
+
+                        toast.info(status, { duration: 5000 });
+                    }}
+                    className="w-full rounded-3xl bg-blue-50 border border-blue-100 px-5 py-4 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-all"
+                >
+                    Ver Estado WhatsApp
+                </button>
+
                 {/* Force Send */}
                 <button
                     type="button"

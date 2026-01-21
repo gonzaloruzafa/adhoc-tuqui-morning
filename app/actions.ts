@@ -46,7 +46,7 @@ export async function saveConfiguration(formData: FormData) {
 
     // Update/Create Schedule
     const { calculateNextRunAt } = await import("@/lib/scheduler");
-    const nextRunAt = calculateNextRunAt(timeLocal, timezone, [1, 2, 3, 4, 5]);
+    const nextRunAt = calculateNextRunAt(timeLocal, timezone, [0, 1, 2, 3, 4, 5, 6]);
 
     const { error } = await db
         .from("tuqui_morning_schedules")
@@ -54,8 +54,8 @@ export async function saveConfiguration(formData: FormData) {
             user_email: session.user.email,
             time_local: timeLocal,
             enabled: enabled,
-            // Keep existing days or default to M-F
-            days_of_week: [1, 2, 3, 4, 5],
+            // Todos los días para mantener loop de 24hs
+            days_of_week: [0, 1, 2, 3, 4, 5, 6],
             next_run_at: nextRunAt.toISOString(),
             updated_at: new Date().toISOString()
         }, { onConflict: 'user_email' });

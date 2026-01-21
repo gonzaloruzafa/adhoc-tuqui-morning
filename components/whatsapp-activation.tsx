@@ -55,7 +55,7 @@ export function WhatsAppActivation({ userEmail }: WhatsAppActivationProps) {
 
     // Twilio WhatsApp Sandbox Number
     const WA_NUMBER = "14155238886";
-    const ACTIVATION_TEXT = "join prepare-tonight";
+    const ACTIVATION_TEXT = "join grass-oxygen";
     const waLink = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(ACTIVATION_TEXT)}`;
 
     return (

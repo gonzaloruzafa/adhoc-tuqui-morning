@@ -21,16 +21,27 @@ export async function POST(req: Request) {
         // Limpiar el prefijo whatsapp: para buscar en la base
         const cleanNumber = from.replace("whatsapp:", "").trim();
 
+        console.log(`[Twilio Webhook] Looking for user with phone: "${cleanNumber}"`);
+
         // 1. Encontrar usuario por teléfono
         // Importante: El usuario debe haber guardado su teléfono en la config
         const { data: user, error: userError } = await db
             .from("tuqui_morning_users")
-            .select("email, name, whatsapp_status")
+            .select("email, name, whatsapp_status, phone_whatsapp")
             .eq("phone_whatsapp", cleanNumber)
             .maybeSingle();
 
+        console.log(`[Twilio Webhook] Query result:`, { user, userError });
+
         if (userError || !user) {
             console.warn(`[Twilio Webhook] Message from unknown number: ${from}. Message: ${body}`);
+
+            // DEBUG: Let's see ALL users with phones to understand the mismatch
+            const { data: allUsers } = await db
+                .from("tuqui_morning_users")
+                .select("email, phone_whatsapp")
+                .not("phone_whatsapp", "is", null);
+            console.log(`[Twilio Webhook DEBUG] All users with phones:`, allUsers);
             // Respondemos con éxito a Twilio para evitar reintentos, pero no hacemos nada
             return new Response("<Response/>", { headers: { "Content-Type": "text/xml" } });
         }

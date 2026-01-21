@@ -53,9 +53,9 @@ export function WhatsAppActivation({ userEmail }: WhatsAppActivationProps) {
 
     const isActive = status === 'active' && expiresAt && new Date(expiresAt) > new Date();
 
-    // Twilio WhatsApp Number (Prod - tuqui-agents-alpha)
-    const WA_NUMBER = "5491148999536";
-    const ACTIVATION_TEXT = "Hola Tuqui! Despertate ☀️";
+    // Twilio WhatsApp Sandbox Number
+    const WA_NUMBER = "14155238886";
+    const ACTIVATION_TEXT = "join prepare-tonight";
     const waLink = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(ACTIVATION_TEXT)}`;
 
     return (

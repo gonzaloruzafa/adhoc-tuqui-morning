@@ -59,7 +59,7 @@ export async function GET(request: Request) {
 
             // Loop until we find a day that matches days_of_week
             // 0=Sunday, 1=Monday...
-            const allowedDays = schedule.days_of_week || [1, 2, 3, 4, 5];
+            const allowedDays = schedule.days_of_week || [0, 1, 2, 3, 4, 5, 6]; // Todos los días por defecto
             while (!allowedDays.includes(nextDate.getDay())) {
                 nextDate = new Date(nextDate.getTime() + 24 * 60 * 60 * 1000);
             }

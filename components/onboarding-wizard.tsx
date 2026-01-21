@@ -311,7 +311,7 @@ export function OnboardingWizard({
                             Enviá un mensaje rápido para conectar tu cuenta.
                         </p>
                         <a
-                            href={`https://wa.me/5491148999536?text=${encodeURIComponent("Hola Tuqui! Despertate ☀️")}`}
+                            href={`https://wa.me/14155238886?text=${encodeURIComponent("join prepare-tonight")}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="block w-full bg-[#25D366] text-white py-4 rounded-3xl font-bold text-sm flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform shadow-lg"

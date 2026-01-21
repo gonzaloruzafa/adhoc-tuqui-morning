@@ -40,8 +40,13 @@ export interface UserProfile {
     // Meta
     confidence_score: number;
 
-    // Intereses (NUEVO)
+    // Intereses y detalles personales
     personal_interests: string[] | null;
+    work_style: string | null; // Estilo de trabajo (ej: "maker mode", "multitasking", "deep work")
+    decision_making: string | null; // Cómo toma decisiones
+    priorities: string[] | null; // Prioridades detectadas
+    upcoming_events: string[] | null; // Eventos próximos detectados en emails
+    pain_points: string[] | null; // Puntos de dolor o desafíos actuales
 }
 
 export interface VIPContact {
@@ -163,15 +168,22 @@ INSTRUCCIONES DE ANÁLISIS
    - partner: socios de negocio
    - vendor: proveedores
 
-4. DETECTAR PROYECTOS ACTIVOS Y GUSTOS:
+4. DETECTAR PROYECTOS ACTIVOS, GUSTOS Y DETALLES PERSONALES:
    - ¿Qué está construyendo? ¿Qué iniciativas lidera?
    - ¿Hay nombres de productos/proyectos mencionados?
    - ¿Detectás algún interés, hobby o gusto personal fuera del trabajo para dar "color" al perfil?
+   - ¿Cómo trabaja? ¿Es más de hacer (maker) o coordinar? ¿Multitarea o deep work?
+   - ¿Qué le preocupa? ¿Qué desafíos enfrenta? (pain points)
+   - ¿Hay eventos próximos? (meetings, lanzamientos, deadlines importantes en los próximos días)
 
 5. INFERIR ESTRÉS Y CAUSAS:
    - Alto volumen de emails urgentes → alto estrés
    - Muchos threads abiertos sin resolver → alto estrés
    - Buscar palabras: "urgente", "deadline", "ASAP", "problema"
+
+6. DETECTAR PRIORIDADES Y ESTILO DE DECISIÓN:
+   - ¿Qué es MÁS importante para esta persona? (revenue, product, team, growth, etc.)
+   - ¿Cómo decide? (data-driven, intuitivo, consenso, rápido/lento)
 
 ═══════════════════════════════════════════════════════════════
 OUTPUT REQUERIDO (JSON válido, sin markdown)
@@ -197,7 +209,12 @@ OUTPUT REQUERIDO (JSON válido, sin markdown)
   "stress_level": "low" | "medium" | "high",
   "stress_reasons": ["razones específicas del nivel de estrés"],
   "personal_interests": ["hobbies, gustos o temas de interés personal detectados"],
-  
+  "work_style": "descripción del estilo de trabajo (ej: 'maker mode', 'coordinador', 'multitasking')",
+  "decision_making": "cómo toma decisiones (ej: 'data-driven y rápido', 'busca consenso')",
+  "priorities": ["hasta 5 prioridades detectadas en orden de importancia"],
+  "upcoming_events": ["eventos próximos detectados en los emails con fechas si están disponibles"],
+  "pain_points": ["desafíos o puntos de dolor actuales"],
+
   "vip_contacts": [
     {
       "email": "email@ejemplo.com",

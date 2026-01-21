@@ -151,7 +151,7 @@ export function ConfigForm({ initialData }: ConfigFormProps) {
                     </div>
                     <div>
                         <p className="text-sm font-bold text-gray-900">Envío Diario</p>
-                        <p className="text-xs text-gray-500">Lunes a Viernes</p>
+                        <p className="text-xs text-gray-500">Todos los días</p>
                     </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">

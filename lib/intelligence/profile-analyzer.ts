@@ -301,6 +301,8 @@ export async function runProfileAnalysis(userEmail: string): Promise<void> {
         const { fetchEmailsForProfile } = await import("@/lib/google/gmail");
         console.log(`[ProfileAnalyzer] Fetching emails with ENHANCED method...`);
 
+        // Update total immediately if possible (requires refactor of fetchEmailsForProfile or just trust it starts at 0)
+        
         const emails = await fetchEmailsForProfile(accessToken, {
             maxResults: 300,    // REDUCIDO para velocidad y estabilidad
             daysBack: 60,       // 2 MESES

@@ -48,8 +48,8 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail, variant = 
                     router.refresh();
                 }
 
-                // If stuck for more than 40 seconds
-                if (Date.now() - lastProgressAt > 40000) {
+                // If stuck for more than 60 seconds
+                if (Date.now() - lastProgressAt > 60000) {
                     setIsStuck(true);
                 }
             } catch (e) {
@@ -184,6 +184,27 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail, variant = 
                                             </button>
                                         )}
                                     </div>
+
+                                    {isRecalculating && (
+                                        <div className="w-full space-y-2 px-1">
+                                            <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-adhoc-violet/60">
+                                                <span>{isStuck ? "Lento..." : "Progreso"}</span>
+                                                <span>{progress.count} / {progress.total || '...'}</span>
+                                            </div>
+                                            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                                <div
+                                                    className="bg-adhoc-violet h-full rounded-full transition-all duration-700 animate-pulse"
+                                                    style={{ width: `${Math.round((progress.count / Math.max(1, progress.total)) * 100)}%` }}
+                                                ></div>
+                                            </div>
+                                            {isStuck && (
+                                                <p className="text-[8px] text-gray-400 font-bold uppercase text-center italic">
+                                                    Gmail está tardando en responder. No cierres.
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+
                                     <p className="text-[9px] text-gray-400 text-center font-bold uppercase tracking-widest leading-relaxed">
                                         Analizaremos tus últimos 300 emails para refinar tu perfil profesional v3.0
                                     </p>

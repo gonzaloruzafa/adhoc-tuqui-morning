@@ -160,7 +160,12 @@ export async function fetchEmailsForProfile(
         const total = messageIds.length;
         const results: EmailForProfile[] = [];
 
-        const chunkSize = 40;
+        // Report initial total immediately
+        if (onProgress) {
+            await onProgress(0, total);
+        }
+
+        const chunkSize = 25;
         for (let i = 0; i < messageIds.length; i += chunkSize) {
             const chunk = messageIds.slice(i, i + chunkSize);
             console.log(`[Gmail Profile] Fetching chunk ${i / chunkSize + 1} (${chunk.length} messages)`);

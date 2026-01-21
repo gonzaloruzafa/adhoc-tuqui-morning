@@ -9,7 +9,7 @@ import { WhatsAppActivation } from "@/components/whatsapp-activation";
 export default async function Home() {
   const session = await auth()
 
-  // If logged in, show the Dashboard (previous design but slightly polished or same)
+  // If logged in, show the Dashboard with "Tuqui Mañana" aesthetic
   if (session?.user) {
     const config = await getUserConfig();
     const isEnabled = config?.enabled ?? true;
@@ -30,104 +30,88 @@ export default async function Home() {
     const isAnalyzing = userProfile?.profile_analysis_status === 'analyzing';
 
     return (
-      <div className="min-h-screen bg-gray-50/50">
-        {/* Header */}
-        <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
-          <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative w-8 h-8">
-                <Image src="/adhoc-logo.png" alt="Adhoc" fill className="object-contain" />
-              </div>
-              <span className="font-medium text-gray-900">Tuqui de tus mañanas</span>
-            </div>
-            <form action={async () => {
-              "use server"
-              await signOut()
-            }}>
-              <button className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
-                Salir
-              </button>
-            </form>
+      <div className="min-h-screen bg-gradient-to-b from-[#E0F2FE] via-[#F8FAFC] to-white flex flex-col items-center px-6 pt-20">
+        <header className="w-full max-w-md flex flex-col items-center text-center space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="flex items-center gap-2 text-[#7C6CD8] font-bold tracking-widest uppercase text-[10px]">
+            <svg className="w-4 h-4 text-[#FF7348] animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            Tuqui Mañana
           </div>
+
+          <h1 className="text-5xl font-display font-medium text-gray-900 leading-tight">
+            Buen día,<br />{firstName}.
+          </h1>
+
+          <p className="text-xl text-gray-500 font-light">
+            Tu briefing de hoy está listo.
+          </p>
+
+          <div className="flex items-center gap-2 pt-4">
+            <div className={`w-2 h-2 rounded-full ${isEnabled ? 'bg-[#7C6CD8]' : 'bg-gray-300'}`} />
+            <span className="text-xs text-gray-400 font-medium">
+              {isEnabled ? `Activo para las ${timeLocal}` : 'Pausado'}
+            </span>
+          </div>
+
+          {isAnalyzing && (
+            <div className="bg-adhoc-violet/10 text-adhoc-violet px-4 py-2 rounded-full text-[10px] font-black animate-pulse flex items-center gap-2 border border-adhoc-violet/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-adhoc-violet animate-ping"></span>
+              ANALIZANDO PERFIL...
+            </div>
+          )}
         </header>
 
-        <main className="max-w-3xl mx-auto px-6 py-12">
-          <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700 flex justify-between items-start">
-            <div>
-              <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2 font-display">Hola, {firstName}.</h1>
-              <p className="text-gray-500 text-lg">Tu resumen diario está listo para las {timeLocal}.</p>
+        <main className="w-full max-w-md mt-24 space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
+          <Link href="/profile" className="flex items-center justify-between w-full p-6 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[32px] hover:bg-white/60 transition-all group shadow-sm hover:shadow-md">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-adhoc-violet/10 text-adhoc-violet flex items-center justify-center group-hover:bg-adhoc-violet/20 transition-colors">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <span className="text-lg font-medium text-gray-800">Perfil</span>
             </div>
-            {isAnalyzing && (
-              <div className="bg-adhoc-violet/10 text-adhoc-violet px-3 py-1.5 rounded-full text-xs font-black animate-pulse flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-adhoc-violet"></span>
-                ANALIZANDO PERFIL...
-              </div>
-            )}
-          </div>
+            <svg className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Status Card */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-8">
-                <div className="w-10 h-10 rounded-full bg-adhoc-coral/10 text-adhoc-coral flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                </div>
-                <span className={`flex h-2.5 w-2.5 rounded-full ${isEnabled ? 'bg-emerald-500' : 'bg-gray-300'}`}></span>
+          <Link href="/config" className="flex items-center justify-between w-full p-6 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[32px] hover:bg-white/60 transition-all group shadow-sm hover:shadow-md">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center group-hover:bg-gray-100 transition-colors">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
               </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Estado</p>
-                <p className="text-lg font-medium text-gray-900">{isEnabled ? 'Activo' : 'Pausado'}</p>
-              </div>
+              <span className="text-lg font-medium text-gray-800">Ajustes</span>
             </div>
+            <svg className="w-5 h-5 text-gray-400 group-hover:rotate-45 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </Link>
 
-            {/* Profile Card */}
-            <Link href="/profile">
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow h-full cursor-pointer group">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="w-10 h-10 rounded-full bg-adhoc-violet/10 text-adhoc-violet flex items-center justify-center group-hover:bg-adhoc-violet/20 transition-colors">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <svg className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Tu Inteligencia</p>
-                  <p className="text-lg font-medium text-gray-900 group-hover:text-adhoc-violet transition-colors">Ver Mi Perfil</p>
-                </div>
-              </div>
-            </Link>
-
-            {/* Config Card */}
-            <Link href="/config">
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow h-full cursor-pointer group">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="w-10 h-10 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center group-hover:bg-gray-100 transition-colors">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <svg className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Configuración</p>
-                  <p className="text-lg font-medium text-gray-900 group-hover:text-gray-900 transition-colors">Preferencias</p>
-                </div>
-              </div>
-            </Link>
-          </div>
-
-          <div className="mt-8">
+          <div className="pt-6">
             <WhatsAppActivation userEmail={session.user.email!} />
           </div>
+
+          <form action={async () => {
+            "use server"
+            await signOut()
+          }} className="pt-4">
+            <button className="w-full text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors py-3">
+              Salir
+            </button>
+          </form>
         </main>
+
+        <footer className="mt-auto pb-12 opacity-20">
+          <div className="relative w-8 h-8">
+            <Image src="/adhoc-logo.png" alt="Adhoc" fill className="object-contain grayscale" />
+          </div>
+        </footer>
       </div>
     );
   }

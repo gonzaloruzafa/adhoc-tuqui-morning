@@ -8,13 +8,28 @@ import { getClient } from "@/lib/supabase/client";
 export async function POST(req: Request) {
     try {
         const formData = await req.formData();
+
+        // DEBUG: Log ALL parameters from Twilio
+        const allParams: Record<string, any> = {};
+        formData.forEach((value, key) => {
+            allParams[key] = value;
+        });
+        console.log("[Twilio Webhook] ALL Parameters:", JSON.stringify(allParams, null, 2));
+
         const from = formData.get("From") as string; // whatsapp:+XXXXXXXXXX
         const body = formData.get("Body") as string;
         const messageSid = formData.get("MessageSid") as string;
+        const direction = formData.get("Direction") as string;
 
         if (!from) {
             console.error("[Twilio Webhook] Missing From number");
             return NextResponse.json({ error: "Missing From" }, { status: 400 });
+        }
+
+        // Si es un mensaje saliente (outbound-api), ignorarlo
+        if (direction === "outbound-api" || direction === "outbound-reply") {
+            console.log("[Twilio Webhook] Ignoring outbound message");
+            return new Response("<Response/>", { headers: { "Content-Type": "text/xml" } });
         }
 
         const db = getClient();

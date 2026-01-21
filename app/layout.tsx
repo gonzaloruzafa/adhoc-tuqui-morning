@@ -16,7 +16,7 @@ const newKansas = localFont({
     { path: '../public/fonts/fonnts.com-New-Kansas-Black.otf', weight: '900', style: 'normal' },
   ],
   variable: '--font-new-kansas',
-  display: 'swap',
+  display: 'block',
 })
 
 const apercu = localFont({
@@ -29,7 +29,7 @@ const apercu = localFont({
     { path: '../public/fonts/apercu_bold_italic_pro.otf', weight: '700', style: 'italic' },
   ],
   variable: '--font-apercu',
-  display: 'swap',
+  display: 'block',
 })
 
 export const metadata: Metadata = {

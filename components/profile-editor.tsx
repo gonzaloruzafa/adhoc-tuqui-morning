@@ -80,11 +80,20 @@ export function ProfileEditor({ initialBio, profileStatus, userEmail, variant = 
         setIsStopping(false);
         setLastProgressAt(Date.now());
         try {
-            await retriggerProfileAnalysis();
+            const res = await fetch('/api/internal/trigger-pipeline', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: userEmail, onlyAnalysis: true })
+            });
+
+            if (!res.ok) throw new Error("Trigger failed");
+
+            // Mark as analyzing locally to start polling
+            setIsRecalculating(true);
             router.refresh();
         } catch (error) {
             console.error(error);
-            alert("Error al iniciar el recalculado");
+            alert("Error al iniciar el recalculado. Probá de nuevo.");
             setIsRecalculating(false);
         }
     };

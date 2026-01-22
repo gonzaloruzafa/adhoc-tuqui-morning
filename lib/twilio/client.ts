@@ -57,35 +57,23 @@ export async function sendWhatsAppAudio(
         const CTA = "\n\n¿Mañana igual? Respondé 'Si' para confirmar.";
 
         if (audioUrl) {
-            console.log(`[Twilio] Sending audio message. URL: ${audioUrl}`);
+            console.log(`[Twilio] Sending audio link message. URL: ${audioUrl}`);
             console.log(`[Twilio] From: ${fromNumber}, To: ${toNumber}`);
 
-            // Primero enviamos el audio
-            try {
-                const audioMsg = await client.messages.create({
-                    from: fromNumber,
-                    to: toNumber,
-                    mediaUrl: [audioUrl],
-                });
-                console.log(`[Twilio] Audio message sent successfully. SID: ${audioMsg.sid}, Status: ${audioMsg.status}`);
-                messageSid = audioMsg.sid;
-            } catch (audioError: any) {
-                console.error(`[Twilio] Audio message FAILED:`, audioError);
-                console.error(`[Twilio] Error details:`, {
-                    code: audioError.code,
-                    message: audioError.message,
-                    moreInfo: audioError.moreInfo
-                });
-                throw audioError; // Re-throw to see full error
-            }
-
-            // Inmediatamente el texto con el CTA
-            const textMsg = await client.messages.create({
+            // Enviamos mensaje con LINK al audio (más confiable que mediaUrl en sandbox)
+            // El sandbox de Twilio tiene problemas descargando archivos (Error 63019)
+            // Con el link, el usuario puede clickear y escuchar directamente en WhatsApp
+            const message = await client.messages.create({
                 from: fromNumber,
                 to: toNumber,
-                body: `🌅 Aquí tenés tu Tuqui de hoy.${CTA}`,
+                body: `🌅 *Aquí tenés tu Tuqui de hoy*
+
+🎧 Escuchá tu briefing:
+${audioUrl}${CTA}`,
             });
-            console.log(`[Twilio] Text message sent. SID: ${textMsg.sid}`);
+
+            console.log(`[Twilio] Audio link message sent. SID: ${message.sid}, Status: ${message.status}`);
+            messageSid = message.sid;
         } else {
             // Solo texto
             const message = await client.messages.create({

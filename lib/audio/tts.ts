@@ -80,16 +80,37 @@ export async function generateAudio(text: string, userId: string) {
 
     // 2. Upload to Storage (Vercel Blob - more reliable for Twilio)
     // Vercel Blob is free for up to 500MB and works perfectly with Twilio
+
+    // Check if BLOB_READ_WRITE_TOKEN is configured
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+        console.error("[TTS] ❌ BLOB_READ_WRITE_TOKEN not found! Add it in Vercel Dashboard → Settings → Environment Variables");
+        console.error("[TTS] Falling back to Supabase Storage...");
+        throw new Error("BLOB_READ_WRITE_TOKEN not configured");
+    }
+
     const filename = `briefings/${userId}/${Date.now()}.wav`;
 
     try {
+        console.log(`[TTS] 📤 Uploading audio to Vercel Blob: ${filename}`);
+
         const blob = await put(filename, audioBuffer, {
             access: 'public',
             contentType: 'audio/wav',
             addRandomSuffix: false
         });
 
-        console.log(`[TTS] Audio uploaded to Vercel Blob. URL: ${blob.url}`);
+        console.log(`[TTS] ✅ Audio uploaded to Vercel Blob. URL: ${blob.url}`);
+
+        // Verify the URL is accessible (helps debug 404 issues)
+        try {
+            const testResponse = await fetch(blob.url, { method: 'HEAD' });
+            console.log(`[TTS] 🔍 URL accessibility test: ${testResponse.status} ${testResponse.statusText}`);
+            if (!testResponse.ok) {
+                console.warn(`[TTS] ⚠️ URL returned ${testResponse.status} - Twilio might fail to download`);
+            }
+        } catch (testError) {
+            console.warn(`[TTS] ⚠️ Could not verify URL accessibility:`, testError);
+        }
 
         const wordCount = text.split(/\s+/).length;
         const durationSeconds = Math.ceil((wordCount / 130) * 60);

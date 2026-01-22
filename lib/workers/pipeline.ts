@@ -87,12 +87,17 @@ export async function processRun(runId: string) {
         const { script } = await generateBriefingScript(prompt);
 
         // 6. Audio
+        console.log(`[Pipeline] 🎵 Starting audio generation for user: ${user.email}`);
         let audioUrl = null;
         try {
             const { url } = await generateAudio(script, user.id);
             audioUrl = url;
-        } catch (ttsError) {
-            console.error("TTS Failed, continuing with text only", ttsError);
+            console.log(`[Pipeline] ✅ Audio generated successfully: ${url}`);
+        } catch (ttsError: any) {
+            console.error("[Pipeline] ❌ TTS FAILED - continuing with text only");
+            console.error("[Pipeline] TTS Error:", ttsError);
+            console.error("[Pipeline] TTS Error message:", ttsError?.message);
+            console.error("[Pipeline] TTS Error stack:", ttsError?.stack?.split('\n').slice(0, 5).join('\n'));
         }
 
         // 7. Save Output
@@ -105,8 +110,10 @@ export async function processRun(runId: string) {
         });
 
         // 8. Delivery
+        console.log(`[Pipeline] 📤 Starting delivery. Audio URL: ${audioUrl ? 'PRESENT' : 'NULL'}`);
         let delivered = false;
         if (user.phone_whatsapp) {
+            console.log(`[Pipeline] 📱 Sending to WhatsApp: ${user.phone_whatsapp}`);
             const result = await sendWhatsAppAudio(user.phone_whatsapp, audioUrl, script, user.email);
             if (result.success) {
                 delivered = true;

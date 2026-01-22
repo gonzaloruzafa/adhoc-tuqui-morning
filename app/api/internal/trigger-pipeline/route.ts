@@ -42,18 +42,26 @@ export async function POST(request: Request) {
     // We use the internal API to decouple logic.
     const baseUrl = process.env.NEXTAUTH_URL || request.url.split('/api')[0];
 
+    console.log(`[Trigger Pipeline] 🚀 Starting pipeline for run ${run.id}`);
+    console.log(`[Trigger Pipeline] Base URL: ${baseUrl}`);
+
     fetch(`${baseUrl}/api/internal/run-pipeline`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            // Optional: Add some internal secret header if run-pipeline checks it, 
-            // but run-pipeline might be public or protected by secret. 
-            // In cron it was protected by CRON_SECRET or just open? 
-            // Let's assume it checks nothing or we might need to authorize it.
-            // Looking at cron: it just fetchs.
         },
         body: JSON.stringify({ runId: run.id })
-    }).catch(e => console.error("Async trigger failed", e));
+    })
+    .then(res => {
+        console.log(`[Trigger Pipeline] Pipeline response: ${res.status} ${res.statusText}`);
+        return res.json();
+    })
+    .then(data => {
+        console.log(`[Trigger Pipeline] ✅ Pipeline completed:`, data);
+    })
+    .catch(e => {
+        console.error("[Trigger Pipeline] ❌ Pipeline failed:", e);
+    });
 
     return NextResponse.json({ success: true, runId: run.id });
 }

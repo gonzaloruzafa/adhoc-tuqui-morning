@@ -1,4 +1,5 @@
 import { getClient } from "@/lib/supabase/client";
+import { put } from '@vercel/blob';
 
 const VOICE_DIRECTION = `
 ### DIRECTOR'S NOTES
@@ -77,54 +78,58 @@ export async function generateAudio(text: string, userId: string) {
 
     const audioBuffer = Buffer.concat([wavHeader, pcmBuffer]);
 
-    // 2. Upload to Supabase Storage
-    const db = getClient();
-    const bucketName = 'briefings';
+    // 2. Upload to Storage (Vercel Blob - more reliable for Twilio)
+    // Vercel Blob is free for up to 500MB and works perfectly with Twilio
+    const filename = `briefings/${userId}/${Date.now()}.wav`;
 
-    // Verify bucket exists, if not try to create it (Admin only)
     try {
-        const { data: buckets, error: listError } = await db.storage.listBuckets();
-        if (listError) throw listError;
-
-        if (!buckets?.find(b => b.name === bucketName)) {
-            console.log(`[Storage] Creating missing bucket: ${bucketName}`);
-            const { error: createError } = await db.storage.createBucket(bucketName, {
-                public: true, // Making public to ensure Twilio can reach it more reliably
-            });
-            if (createError) throw createError;
-        }
-    } catch (err: any) {
-        console.error("[Storage] Bucket check/creation failed:", err);
-        // Continue and try to upload anyway, maybe it exists but list failed
-    }
-
-    const filename = `${userId}/${Date.now()}.wav`;
-
-    const { error: uploadError } = await db.storage
-        .from(bucketName)
-        .upload(filename, audioBuffer, {
+        const blob = await put(filename, audioBuffer, {
+            access: 'public',
             contentType: 'audio/wav',
-            upsert: true
+            addRandomSuffix: false
         });
 
-    if (uploadError) {
-        console.error("[Storage] Upload failed:", uploadError);
-        throw new Error(`Storage upload failed: ${uploadError.message}`);
+        console.log(`[TTS] Audio uploaded to Vercel Blob. URL: ${blob.url}`);
+
+        const wordCount = text.split(/\s+/).length;
+        const durationSeconds = Math.ceil((wordCount / 130) * 60);
+
+        return { url: blob.url, durationSeconds };
+
+    } catch (blobError: any) {
+        console.error("[TTS] Vercel Blob upload failed, trying Supabase fallback:", blobError);
+
+        // FALLBACK: Try Supabase Storage
+        const db = getClient();
+        const bucketName = 'briefings';
+        const supabaseFilename = `${userId}/${Date.now()}.wav`;
+
+        const { error: uploadError } = await db.storage
+            .from(bucketName)
+            .upload(supabaseFilename, audioBuffer, {
+                contentType: 'audio/wav',
+                cacheControl: '3600',
+                upsert: true
+            });
+
+        if (uploadError) {
+            console.error("[Storage] Supabase upload also failed:", uploadError);
+            throw new Error(`Both Vercel Blob and Supabase upload failed`);
+        }
+
+        const { data: publicUrlData } = db.storage
+            .from('briefings')
+            .getPublicUrl(supabaseFilename);
+
+        if (!publicUrlData?.publicUrl) {
+            throw new Error("Failed to get public URL from Supabase");
+        }
+
+        console.log(`[TTS] Audio uploaded to Supabase fallback. URL: ${publicUrlData.publicUrl}`);
+
+        const wordCount = text.split(/\s+/).length;
+        const durationSeconds = Math.ceil((wordCount / 130) * 60);
+
+        return { url: publicUrlData.publicUrl, durationSeconds };
     }
-
-    // 3. Get Public URL (better for Twilio than signed URLs)
-    const { data: publicUrlData } = db.storage
-        .from('briefings')
-        .getPublicUrl(filename);
-
-    if (!publicUrlData?.publicUrl) {
-        throw new Error("Failed to get public URL");
-    }
-
-    console.log(`[TTS] Audio generated successfully. Public URL: ${publicUrlData.publicUrl}`);
-
-    const wordCount = text.split(/\s+/).length;
-    const durationSeconds = Math.ceil((wordCount / 130) * 60);
-
-    return { url: publicUrlData.publicUrl, durationSeconds };
 }

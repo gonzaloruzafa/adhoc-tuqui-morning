@@ -63,7 +63,7 @@ Deberías ver esta secuencia:
 **Solución**: Agrega la variable:
 ```
 Name: TAVILY_API_KEY
-Value: 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
+Value: [obtener de tuqui-agents-alpha/.env.local]
 Environments: All (Production, Preview, Development)
 ```
 
@@ -114,7 +114,8 @@ Mientras esperas el redeploy:
 1. Ve a Vercel → Settings → Environment Variables
 2. Add New:
    ```
-   TAVILY_API_KEY=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
+   Name: TAVILY_API_KEY
+   Value: [obtener de tuqui-agents-alpha/.env.local]
    ```
 3. Selecciona TODOS los ambientes
 4. Save
@@ -123,7 +124,7 @@ Mientras esperas el redeploy:
 
 1. Settings → Environment Variables
 2. Busca `BLOB_READ_WRITE_TOKEN`
-3. Debe decir: `vercel_blob_rw_jqcQnVY0QHkPBLgc_ssUncbYabXf8KzvDemF8ETYLwndryQ`
+3. Debe empezar con: `vercel_blob_rw_...` (token desde Vercel Storage Dashboard)
 4. Debe estar en: Production, Preview, Development
 
 ### Paso 4: Forzar Redeploy Manual

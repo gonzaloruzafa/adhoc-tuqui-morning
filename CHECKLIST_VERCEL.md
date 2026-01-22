@@ -22,10 +22,10 @@ BLOB_READ_WRITE_TOKEN=vercel_blob_rw_XXXXXXXXXXXXX
 
 ### 2. TAVILY_API_KEY (para noticias)
 ```
-TAVILY_API_KEY=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
+TAVILY_API_KEY=tvly-dev-XXXXX (obtenerlo de tuqui-agents-alpha/.env.local)
 ```
 - **Status**: ⚠️ Falta agregar
-- **Cómo obtenerlo**: Ya lo tenés en tuqui-agents-alpha
+- **Cómo obtenerlo**: Ya lo tenés en tuqui-agents-alpha/.env.local
 - **Ambientes**: Production, Preview, Development
 
 ### 3. Otras Variables (ya deberían estar)
@@ -59,7 +59,7 @@ TAVILY_API_KEY=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
 1. Ve a tu proyecto → Settings → Environment Variables
 2. Click "Add New"
 3. Name: `TAVILY_API_KEY`
-4. Value: `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`
+4. Value: [obtener de tuqui-agents-alpha/.env.local]
 5. Selecciona: Production, Preview, Development
 6. Save
 

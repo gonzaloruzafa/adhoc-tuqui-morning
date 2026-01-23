@@ -3,9 +3,9 @@ import { getClient } from "@/lib/supabase/client";
 
 export async function GET(
     _request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
-    const { id } = params;
+    const { id } = await params;
 
     // Buscar el output con este run_id
     const db = getClient();

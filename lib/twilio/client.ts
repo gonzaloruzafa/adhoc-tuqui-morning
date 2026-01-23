@@ -54,9 +54,7 @@ export async function sendWhatsAppAudio(
             console.log(`[Twilio] Sending audio link message. URL: ${audioUrl}`);
             console.log(`[Twilio] From: ${fromNumber}, To: ${toNumber}`);
 
-            // Mensaje con link al audio
-            // SMART: Al clickear el link, se extiende automáticamente la ventana de 24hs
-            // No necesitamos botón separado ni CTA - el click = confirmación implícita
+            // Mensaje 1: Audio link
             const audioMessage = await client.messages.create({
                 from: fromNumber,
                 to: toNumber,
@@ -68,6 +66,18 @@ ${audioUrl}`,
 
             console.log(`[Twilio] Audio link message sent. SID: ${audioMessage.sid}`);
             messageSid = audioMessage.sid;
+
+            // Mensaje 2: Botón interactivo de confirmación
+            // IMPORTANTE: El botón debe tener ButtonPayload="confirm_yes" para que el webhook lo detecte
+            // Cuando el usuario clickea el botón DENTRO de WhatsApp, Twilio envía webhook
+            // Eso extiende la ventana REAL de WhatsApp (no solo nuestra DB)
+            const buttonMessage = await client.messages.create({
+                from: fromNumber,
+                to: toNumber,
+                contentSid: 'HX82d42aa48acc769a4c6d1c8234a2c852', // Content Template aprobado
+            });
+
+            console.log(`[Twilio] Confirmation button sent. SID: ${buttonMessage.sid}`);
         } else {
             // Solo texto (fallback cuando no hay audio)
             const message = await client.messages.create({

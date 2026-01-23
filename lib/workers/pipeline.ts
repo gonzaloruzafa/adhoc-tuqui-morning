@@ -111,10 +111,19 @@ export async function processRun(runId: string) {
 
         // 8. Delivery
         console.log(`[Pipeline] 📤 Starting delivery. Audio URL: ${audioUrl ? 'PRESENT' : 'NULL'}`);
+
+        // Generar link corto para el audio
+        let shortAudioUrl = audioUrl;
+        if (audioUrl) {
+            const baseUrl = process.env.NEXTAUTH_URL || 'https://adhoc-tuqui-morning.vercel.app';
+            shortAudioUrl = `${baseUrl}/api/audio/${runId}`;
+            console.log(`[Pipeline] 🔗 Short audio URL: ${shortAudioUrl}`);
+        }
+
         let delivered = false;
         if (user.phone_whatsapp) {
             console.log(`[Pipeline] 📱 Sending to WhatsApp: ${user.phone_whatsapp}`);
-            const result = await sendWhatsAppAudio(user.phone_whatsapp, audioUrl, script, user.email);
+            const result = await sendWhatsAppAudio(user.phone_whatsapp, shortAudioUrl, script, user.email);
             if (result.success) {
                 delivered = true;
                 await db.from("tuqui_morning_outputs").update({ delivery_status: "delivered_whatsapp" }).eq("run_id", runId);

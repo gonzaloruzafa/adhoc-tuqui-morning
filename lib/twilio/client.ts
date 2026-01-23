@@ -50,17 +50,13 @@ export async function sendWhatsAppAudio(
     try {
         let messageSid;
 
-        // El CTA es crucial para mantener la ventana abierta mañana
-        // TODO: Para producción, implementar botones interactivos usando Content Templates de Twilio
-        // Ver: https://www.twilio.com/docs/whatsapp/buttons
-        // Los botones requieren crear un Content Template con type "twilio/quick-reply"
-        const CTA = "\n\n¿Mañana igual? Respondé 'Si' para confirmar.";
-
         if (audioUrl) {
             console.log(`[Twilio] Sending audio link message. URL: ${audioUrl}`);
             console.log(`[Twilio] From: ${fromNumber}, To: ${toNumber}`);
 
             // Mensaje con link al audio
+            // SMART: Al clickear el link, se extiende automáticamente la ventana de 24hs
+            // No necesitamos botón separado ni CTA - el click = confirmación implícita
             const audioMessage = await client.messages.create({
                 from: fromNumber,
                 to: toNumber,
@@ -72,23 +68,12 @@ ${audioUrl}`,
 
             console.log(`[Twilio] Audio link message sent. SID: ${audioMessage.sid}`);
             messageSid = audioMessage.sid;
-
-            // Mensaje con botón interactivo usando Content Template aprobado
-            // Content Template SID: HX82d42aa48acc769a4c6d1c8234a2c852
-            // Botón: "¡Dale!" (ID: 1)
-            const buttonMessage = await client.messages.create({
-                from: fromNumber,
-                to: toNumber,
-                contentSid: 'HX82d42aa48acc769a4c6d1c8234a2c852',
-            });
-
-            console.log(`[Twilio] Button message sent. SID: ${buttonMessage.sid}`);
         } else {
-            // Solo texto
+            // Solo texto (fallback cuando no hay audio)
             const message = await client.messages.create({
                 from: fromNumber,
                 to: toNumber,
-                body: `🌅 Tu briefing:\n\n${fallbackText}${CTA}`,
+                body: `🌅 Tu briefing:\n\n${fallbackText}`,
             });
             messageSid = message.sid;
         }

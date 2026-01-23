@@ -60,20 +60,29 @@ export async function sendWhatsAppAudio(
             console.log(`[Twilio] Sending audio link message. URL: ${audioUrl}`);
             console.log(`[Twilio] From: ${fromNumber}, To: ${toNumber}`);
 
-            // Enviamos mensaje con LINK al audio (más confiable que mediaUrl en sandbox)
-            // El sandbox de Twilio tiene problemas descargando archivos (Error 63019)
-            // Con el link, el usuario puede clickear y escuchar directamente en WhatsApp
-            const message = await client.messages.create({
+            // Mensaje con link al audio
+            const audioMessage = await client.messages.create({
                 from: fromNumber,
                 to: toNumber,
                 body: `🌅 *Aquí tenés tu Tuqui de hoy*
 
 🎧 Escuchá tu briefing:
-${audioUrl}${CTA}`,
+${audioUrl}`,
             });
 
-            console.log(`[Twilio] Audio link message sent. SID: ${message.sid}, Status: ${message.status}`);
-            messageSid = message.sid;
+            console.log(`[Twilio] Audio link message sent. SID: ${audioMessage.sid}`);
+            messageSid = audioMessage.sid;
+
+            // Mensaje con botón interactivo usando Content Template aprobado
+            // Content Template SID: HX82d42aa48acc769a4c6d1c8234a2c852
+            // Botón: "¡Dale!" (ID: 1)
+            const buttonMessage = await client.messages.create({
+                from: fromNumber,
+                to: toNumber,
+                contentSid: 'HX82d42aa48acc769a4c6d1c8234a2c852',
+            });
+
+            console.log(`[Twilio] Button message sent. SID: ${buttonMessage.sid}`);
         } else {
             // Solo texto
             const message = await client.messages.create({

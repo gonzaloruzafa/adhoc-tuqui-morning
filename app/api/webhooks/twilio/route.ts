@@ -91,7 +91,8 @@ export async function POST(req: Request) {
         const lowerBody = body?.toLowerCase().trim() || "";
 
         // Check if it's a button response
-        if (buttonPayload === "confirm_yes" || lowerBody === "si" || lowerBody === "sí") {
+        // Button ID from Content Template HX82d42aa48acc769a4c6d1c8234a2c852 is "1"
+        if (buttonPayload === "1" || lowerBody === "si" || lowerBody === "sí" || lowerBody === "dale") {
             responseText = `¡Confirmado ${user.name}! Mañana te mando tu Tuqui a la hora de siempre. ☀️`;
         } else if (lowerBody.includes("hola") || lowerBody.includes("despertate")) {
             responseText = `¡Hola! Tuqui está despierto. A partir de ahora vas a recibir tus briefings diarios por acá.`;

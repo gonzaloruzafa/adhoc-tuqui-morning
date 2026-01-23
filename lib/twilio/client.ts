@@ -68,13 +68,13 @@ ${audioUrl}`,
             messageSid = audioMessage.sid;
 
             // Mensaje 2: Botón interactivo de confirmación
-            // IMPORTANTE: El botón debe tener ButtonPayload="confirm_yes" para que el webhook lo detecte
-            // Cuando el usuario clickea el botón DENTRO de WhatsApp, Twilio envía webhook
+            // IMPORTANTE: El botón tiene ButtonPayload="1" (ID configurado en Content Template)
+            // Cuando el usuario clickea "¡Dale!" DENTRO de WhatsApp, Twilio envía webhook
             // Eso extiende la ventana REAL de WhatsApp (no solo nuestra DB)
             const buttonMessage = await client.messages.create({
                 from: fromNumber,
                 to: toNumber,
-                contentSid: 'HX82d42aa48acc769a4c6d1c8234a2c852', // Content Template aprobado
+                contentSid: 'HX82d42aa48acc769a4c6d1c8234a2c852', // "¿Te mandamos audio mañana tmb :D?" + Button "¡Dale!" (ID: 1)
             });
 
             console.log(`[Twilio] Confirmation button sent. SID: ${buttonMessage.sid}`);

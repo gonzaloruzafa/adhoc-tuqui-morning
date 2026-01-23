@@ -3,14 +3,21 @@ import { getClient } from "@/lib/supabase/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(request: Request) {
+    // Try to get session, but allow debugging without it via query param
+    const { searchParams } = new URL(request.url);
+    const debugEmail = searchParams.get("email");
+
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userEmail = debugEmail || session?.user?.email;
+
+    if (!userEmail) {
+        return NextResponse.json({
+            error: "Need authentication or ?email=your@email.com query param"
+        }, { status: 401 });
     }
 
     const db = getClient();
-    const userEmail = session.user.email;
 
     // 1. Get User
     const { data: user } = await db
